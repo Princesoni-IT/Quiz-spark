@@ -1,0 +1,8 @@
+/* index.css - Yahan hum sabhi default browser styles ko reset karenge. */
+
+/* Universal selector (*) sabhi elements ko select karta hai */
+* {
+  box-sizing: border-box; /* Padding aur border ko element ki total width/height mein include karta hai */
+  margin: 0; /* Sabhi default margins ko hatata hai */
+  padding: 0; /* Sabhi default paddings ko hatata hai */
+}
