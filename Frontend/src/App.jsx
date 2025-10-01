@@ -19,7 +19,6 @@ function App() {
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   
-  // Baaki ke form states waise hi rahenge
   const [isLoginView, setIsLoginView] = useState(true);
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -54,7 +53,6 @@ function App() {
     };
   }, []);
 
-  // Baaki saare functions waise hi rahenge (handleLogin, handleSignUp, etc.)
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
@@ -62,7 +60,6 @@ function App() {
       alert(response.data.message);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userId', response.data.userId);
         const decodedUser = jwtDecode(response.data.token);
         setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName }); 
         setCurrentPage('home');
@@ -86,7 +83,6 @@ function App() {
 
   const handleLogout = () => { 
     localStorage.removeItem('token');
-    localStorage.removeItem('userId');
     setCurrentUser(null);
     setCurrentPage('auth');
    };
@@ -122,6 +118,10 @@ function App() {
   const handleQuizJoined = (quizData) => {
     setActiveQuiz(quizData);
     setCurrentPage('lobby');
+  };
+
+  const handleKicked = () => {
+    setCurrentPage('home');
   };
   
   const renderAuthPage = () => (
@@ -159,11 +159,11 @@ function App() {
       case 'dashboard': return <Dashboard onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} />;
       case 'createQuiz': return <CreateQuiz onQuizCreated={handleQuizCreated} onBack={() => setCurrentPage('dashboard')} />;
       case 'addQuestions': return <AddQuestions quiz={activeQuiz} onBack={() => setCurrentPage('dashboard')} onFinish={handleQuestionsAdded} />;
-      case 'lobby': return <Lobby quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} onKicked={() => setCurrentPage('home')} />;
+      case 'lobby': return <Lobby quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} onKicked={handleKicked} />;
       case 'joinQuiz': return <JoinQuiz onBack={() => setCurrentPage('home')} onQuizJoined={handleQuizJoined} />;
-      case 'countdown': // Naya case
+      case 'countdown':
         return <QuizCountdown />;
-      case 'quizPlayer': // Naya case
+      case 'quizPlayer':
         return <QuizPlayer socket={socket} quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('dashboard')} />;
       case 'auth': 
       default:
