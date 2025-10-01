@@ -158,10 +158,17 @@ io.on('connection', (socket) => {
     const { roomCode, user } = data;
     socket.join(roomCode);
     user.socketId = socket.id;
-    if (!quizRooms[roomCode]) quizRooms[roomCode] = { players: [], quiz: null, currentQuestion: -1, quizTimer: null };
-    const userExists = quizRooms[roomCode].players.find(p => p.id === user.id);
-    if (!userExists) quizRooms[roomCode].players.push(user);
-    io.to(roomCode).emit('update_student_list', quizRooms[roomCode].players);
+        if (!quizRooms[roomCode]) quizRooms[roomCode] = { players: [], quiz: null, currentQuestion: -1, quizTimer: null };
+        const userExists = quizRooms[roomCode].players.find(p => p.id === user.id);
+        if (!userExists) {
+            // Initialize score and hasAnswered for every player
+            quizRooms[roomCode].players.push({
+                ...user,
+                score: 0,
+                hasAnswered: false
+            });
+        }
+        io.to(roomCode).emit('update_student_list', quizRooms[roomCode].players);
   });
 
   socket.on('kick_student', (data) => {

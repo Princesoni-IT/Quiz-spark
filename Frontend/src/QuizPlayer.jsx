@@ -77,7 +77,7 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
         if (selectedOption === null) return;
         setSubmitted(true);
         socket.emit('submit_answer', {
-            quizCode: quiz.quizCode,
+            roomCode: quiz.quizCode, // Use roomCode instead of quizCode
             userId: user.id,
             questionIndex: questionNumber - 1,
             selectedOptionIndex: selectedOption
