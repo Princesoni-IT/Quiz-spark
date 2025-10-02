@@ -28,7 +28,26 @@ function Leaderboard({ scores, onBack }) {
           </div>
         ))}
       </div>
-      <button onClick={onBack} className="btn" style={{marginTop: '30px'}}>Back to Dashboard</button>
+      <button
+        onClick={onBack}
+        style={{
+          background: 'linear-gradient(45deg, #6a82fb, #fc5c7d)',
+          color: 'white',
+          border: 'none',
+          padding: '10px 24px',
+          borderRadius: '30px',
+          fontWeight: 600,
+          fontSize: '1rem',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+          marginTop: '30px',
+          transition: 'all 0.3s',
+        }}
+        onMouseOver={e => e.currentTarget.style.background = 'linear-gradient(45deg, #fc5c7d, #6a82fb)'}
+        onMouseOut={e => e.currentTarget.style.background = 'linear-gradient(45deg, #6a82fb, #fc5c7d)'}
+      >
+        Back to Home
+      </button>
     </div>
   );
 }

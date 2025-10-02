@@ -45,6 +45,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
       <div className="auth-container">
         <h2>Create Your Quiz</h2>
         <p>Fill in the details to start a new quiz room.</p>
+         <p >Fill correct because you don't change quiz setting after you only change questions</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <input type="text" placeholder="Quiz Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <textarea placeholder="Quiz Description..." value={description} onChange={(e) => setDescription(e.target.value)} required rows="3"></textarea>

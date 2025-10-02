@@ -153,3 +153,7 @@ body {
     background-color: #c0392b;
 }
 
+body {
+  background: url('images/Homebanner.png') center/cover no-repeat fixed;
+  background-color: whitesmoke; /* fallback color */
+}

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import Navbar from './Navbar.jsx';
+import Sidebar from './Sidebar.jsx';
 import axios from 'axios';
 import './App.css';
 import './index.css';
@@ -18,11 +20,12 @@ function App() {
   const [currentPage, setCurrentPage] = useState('auth');
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  
   const [isLoginView, setIsLoginView] = useState(true);
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
+  // Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -36,7 +39,7 @@ function App() {
         setCurrentPage('auth');
       }
     }
-
+    
     // Naye listeners: Jab server se quiz start hone ke events aayein
     socket.on('quiz_starting', () => {
         setCurrentPage('countdown');
@@ -85,7 +88,8 @@ function App() {
     localStorage.removeItem('token');
     setCurrentUser(null);
     setCurrentPage('auth');
-   };
+    setIsSidebarOpen(false);
+  };
    
   const handleQuizCreated = (quizData) => { 
     setActiveQuiz(quizData);
@@ -140,23 +144,18 @@ function App() {
 
   const renderHomePage = () => (
     <>
-      <header className="app-header">
-        <h1>Quiz Spark ✨</h1>
-        <p>Welcome, {currentUser?.fullName || 'User'}! Choose an option to start.</p>
-        <button onClick={handleLogout} className="btn" style={{ backgroundColor: '#e74c3c', marginTop: '20px' }}>Logout</button>
-      </header>
-      <main className="options-container">
+      <main className="options-container" style={{ marginTop: '80px' }}>
         <div className="option-card"><h2>Create Room</h2><p>Setup a new quiz as an Admin</p><button onClick={() => setCurrentPage('dashboard')} className="btn create-btn">Go to Dashboard</button></div>
         <div className="option-card"><h2>Join Room</h2><p>Enter a code to join a quiz</p><button onClick={() => setCurrentPage('joinQuiz')} className="btn join-btn">Join a Quiz</button></div>
       </main>
-      <footer className="app-footer"><p>Made with ❤️ for modern learning</p></footer>
+      <footer className="app-footer"><h3>Made With 👨‍💻Team ✨Spark (Prince, Som, Akhlesh)</h3></footer>
     </>
   );
 
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home': return renderHomePage();
-      case 'dashboard': return <Dashboard onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} />;
+  case 'dashboard': return <Dashboard onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} onBack={() => setCurrentPage('home')} />;
       case 'createQuiz': return <CreateQuiz onQuizCreated={handleQuizCreated} onBack={() => setCurrentPage('dashboard')} />;
       case 'addQuestions': return <AddQuestions quiz={activeQuiz} onBack={() => setCurrentPage('dashboard')} onFinish={handleQuestionsAdded} />;
       case 'lobby': return <Lobby quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} onKicked={handleKicked} />;
@@ -171,7 +170,20 @@ function App() {
     }
   };
 
-  return <div className="container">{renderCurrentPage()}</div>;
+  // Show Navbar and Sidebar only when user is logged in (not on auth page)
+  const isAuthenticated = currentUser && currentPage !== 'auth';
+
+  return (
+    <div className="container">
+      {isAuthenticated && (
+        <>
+          <Navbar user={currentUser} onProfileClick={() => setIsSidebarOpen(true)} />
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={handleLogout} />
+        </>
+      )}
+      {renderCurrentPage()}
+    </div>
+  );
 }
 
 export default App;

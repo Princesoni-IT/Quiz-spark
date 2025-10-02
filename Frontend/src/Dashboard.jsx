@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz }) { // onEditQuiz naya prop
+function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEditQuiz naya prop
   const [quizzes, setQuizzes] = useState([]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz }) { // onEditQuiz na
       setQuizzes(response.data);
     } catch (error) {
       console.error("Failed to fetch quizzes", error);
-      alert("Could not fetch your quizzes.");
+      alert("Your Token is Expire Please Login Again.");
     }
   };
 
@@ -48,7 +48,31 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz }) { // onEditQuiz na
         <h1>Admin Dashboard</h1>
         <p>Manage your quizzes or create a new one.</p>
       </header>
-      
+
+      <div style={{ width: '100%', textAlign: 'left', marginBottom: '20px' }}>
+        <button
+          onClick={onBack}
+          style={{
+            background: 'linear-gradient(45deg, #6a82fb, #fc5c7d)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 24px',
+            borderRadius: '30px',
+            fontWeight: 600,
+            fontSize: '1rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+            marginBottom: '10px',
+            marginRight: '10px',
+            transition: 'all 0.3s',
+          }}
+          onMouseOver={e => e.currentTarget.style.background = 'linear-gradient(45deg, #fc5c7d, #6a82fb)'}
+          onMouseOut={e => e.currentTarget.style.background = 'linear-gradient(45deg, #6a82fb, #fc5c7d)'}
+        >
+          Back to Home
+        </button>
+      </div>
+
       <div className="dashboard-actions">
         <button onClick={onCreateQuiz} className="btn create-btn">
           + Create New Quiz
