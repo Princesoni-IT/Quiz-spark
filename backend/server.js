@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
@@ -5,6 +6,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -27,7 +29,14 @@ const connectDB = async () => {
 };
 
 // --- Schemas ---
-const userSchema = new mongoose.Schema({ fullName: { type: String, required: true }, mobileNumber: { type: String, required: true, unique: true }, password: { type: String, required: true }});
+
+const userSchema = new mongoose.Schema({
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    otp: { type: String },
+    otpVerified: { type: Boolean, default: false }
+});
 const User = mongoose.model('User', userSchema);
 
 const questionSchema = new mongoose.Schema({ text: { type: String, required: true }, options: [{ type: String, required: true }], correctAnswerIndex: { type: Number, required: true }});
@@ -51,26 +60,77 @@ const authMiddleware = (req, res, next) => {
 
 
 // --- API Routes ---
+
+// Registration Step 1: Generate OTP and send email
 app.post('/api/register', async (req, res) => {
     try {
-        const { fullName, mobileNumber, password } = req.body;
-        const existingUser = await User.findOne({ mobileNumber });
-        if (existingUser) return res.status(400).json({ message: "User with this mobile number already exists." });
+        const { fullName, email, password } = req.body;
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ message: "User with this email already exists." });
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        const newUser = new User({ fullName, mobileNumber, password: hashedPassword });
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Save user with OTP, not verified yet
+        const newUser = new User({ fullName, email, password: hashedPassword, otp, otpVerified: false });
         await newUser.save();
-        res.status(201).json({ message: "User registered successfully!" });
+
+        // Send OTP via Gmail SMTP
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.GMAIL_USER,
+            to: email,
+            subject: 'Your QuizSpark OTP',
+text: `Hello,
+Thank you for registering on quiz Spark!
+Your OTP for registration is: 
+        ${otp}
+⚠️This OTP is valid for 10 minutes. 
+Please do not share it with anyone.
+
+If you did not request this, please ignore this email.
+
+Regards,
+Team Quiz Spark✨`,
+        };
+        await transporter.sendMail(mailOptions);
+
+        res.status(201).json({ message: "OTP sent to your email!" });
     } catch (error) {
         res.status(500).json({ message: "Server error during registration.", error });
     }
 });
 
+// Registration Step 2: Verify OTP
+app.post('/api/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ message: "User not found." });
+        if (user.otpVerified) return res.status(400).json({ message: "OTP already verified." });
+        if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP." });
+        user.otpVerified = true;
+        user.otp = undefined;
+        await user.save();
+        res.status(200).json({ message: "OTP verified, registration complete!" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error during OTP verification.", error });
+    }
+});
+
+
 app.post('/api/login', async (req, res) => {
     try {
-        const { mobileNumber, password } = req.body;
-        const user = await User.findOne({ mobileNumber });
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ message: "Invalid credentials." });
+        if (!user.otpVerified) return res.status(400).json({ message: "OTP not verified. Please verify OTP before login." });
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials." });
         const token = jwt.sign({ userId: user._id.toString(), fullName: user.fullName }, process.env.JWT_SECRET, { expiresIn: '1h' });

@@ -1,0 +1,5 @@
+Run this command in your backend folder to install Nodemailer for Gmail SMTP:
+
+npm install nodemailer
+
+After installing, you can use Gmail SMTP to send OTP emails for registration.

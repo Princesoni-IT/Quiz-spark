@@ -77,7 +77,7 @@ function AddQuestions({ quiz, onBack, onFinish }) {
   return (
     <div className="add-questions-container">
       {/* Back button ab Dashboard par jayega */}
-      <button onClick={onBack} className="back-btn">← Back to Dashboard</button>
+      <button onClick={onBack} className="btn create-btn start-quiz-btn">← Back to Dashboard</button>
       <div className="auth-container" style={{maxWidth: '800px'}}>
         <h2>{quiz.questions && quiz.questions.length > 0 ? 'Edit' : 'Add'} Questions for "{quiz.title}"</h2>
         

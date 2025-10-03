@@ -22,7 +22,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoginView, setIsLoginView] = useState(true);
   const [fullName, setFullName] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -59,7 +59,7 @@ function App() {
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/login', { mobileNumber, password });
+      const response = await axios.post('http://localhost:3000/api/login', { email, password });
       alert(response.data.message);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -72,17 +72,37 @@ function App() {
     }
   };
   
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+
   const handleSignUp = async (event) => {
     event.preventDefault();
-    const userData = { fullName, mobileNumber, password };
-    try {
-      const response = await axios.post('http://localhost:3000/api/register', userData);
-      alert(response.data.message);
-      setIsLoginView(true);
-    } catch (error) {
-      alert(error.response?.data?.message || 'An error occurred.');
+    if (!otpSent) {
+      // Step 1: Register and send OTP
+      const userData = { fullName, email, password };
+      try {
+        const response = await axios.post('http://localhost:3000/api/register', userData);
+        alert(response.data.message);
+        setOtpSent(true);
+      } catch (error) {
+        alert(error.response?.data?.message || 'An error occurred.');
+      }
+    } else {
+      // Step 2: Verify OTP
+      try {
+        const response = await axios.post('http://localhost:3000/api/verify-otp', { email, otp });
+        alert(response.data.message);
+        setOtpSent(false);
+        setIsLoginView(true);
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setOtp('');
+      } catch (error) {
+        alert(error.response?.data?.message || 'OTP verification failed.');
+      }
     }
-   };
+  };
 
   const handleLogout = () => { 
     localStorage.removeItem('token');
@@ -134,9 +154,13 @@ function App() {
       <p>Please {isLoginView ? 'login' : 'create an account'} to continue</p>
       <form onSubmit={isLoginView ? handleLogin : handleSignUp} className="auth-form">
         {!isLoginView && (<input type="text" placeholder="Full Name (for signup)" value={fullName} onChange={(e) => setFullName(e.target.value)} required />)}
-        <input type="tel" placeholder="Mobile Number" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} required />
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <div className="auth-buttons">{isLoginView ? (<button type="submit" className="btn login-btn">Login</button>) : (<button type="submit" className="btn signup-btn">Sign Up</button>)}</div>
+        {/* Show OTP input only after registration step */}
+        {!isLoginView && otpSent && (
+          <input type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} required />
+        )}
+        <div className="auth-buttons">{isLoginView ? (<button type="submit" className="btn login-btn">Login</button>) : (<button type="submit" className="btn signup-btn">{otpSent ? 'Verify OTP' : 'Sign Up'}</button>)}</div>
       </form>
       {isLoginView ? (<p>Don't have an account? <a href="#" onClick={() => setIsLoginView(false)}>Sign Up</a></p>) : (<p>Already have an account? <a href="#" onClick={() => setIsLoginView(true)}>Login</a></p>)}
     </div>
@@ -144,7 +168,12 @@ function App() {
 
   const renderHomePage = () => (
     <>
-      <main className="options-container" style={{ marginTop: '80px' }}>
+      {currentUser && (
+        <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '1.3rem', fontWeight: 600, color: '#1e2a78' }}>
+          Welcome, {currentUser.fullName}!
+        </div>
+      )}
+      <main className="options-container" style={{ marginTop: '40px' }}>
         <div className="option-card"><h2>Create Room</h2><p>Setup a new quiz as an Admin</p><button onClick={() => setCurrentPage('dashboard')} className="btn create-btn">Go to Dashboard</button></div>
         <div className="option-card"><h2>Join Room</h2><p>Enter a code to join a quiz</p><button onClick={() => setCurrentPage('joinQuiz')} className="btn join-btn">Join a Quiz</button></div>
       </main>

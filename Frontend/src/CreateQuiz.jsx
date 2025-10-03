@@ -41,11 +41,10 @@ function CreateQuiz({ onBack, onQuizCreated }) {
 
   return (
     <div className="create-quiz-container">
-      <button onClick={onBack} className="back-btn">← Back to Dashboard</button>
       <div className="auth-container">
         <h2>Create Your Quiz</h2>
         <p>Fill in the details to start a new quiz room.</p>
-         <p >Fill correct because you don't change quiz setting after you only change questions</p>
+        <p>Fill correct because you don't change quiz setting after you only change questions</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <input type="text" placeholder="Quiz Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <textarea placeholder="Quiz Description..." value={description} onChange={(e) => setDescription(e.target.value)} required rows="3"></textarea>
@@ -56,6 +55,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
           <label>Points per Question:</label>
           <input type="number" min="1" value={pointsPerQuestion} onChange={(e) => setPointsPerQuestion(e.target.value)} required />
           <button type="submit" className="btn create-btn">Create Quiz & Add Questions</button>
+          <button type="button" onClick={onBack} className="back-btn blue-back-btn">← Back to Dashboard</button>
         </form>
       </div>
     </div>

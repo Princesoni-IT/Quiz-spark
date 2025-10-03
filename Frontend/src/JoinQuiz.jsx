@@ -30,7 +30,6 @@ function JoinQuiz({ onBack, onQuizJoined }) {
 
   return (
     <div className="join-quiz-container">
-      <button onClick={onBack} className="back-btn">← Back to Home</button>
       <div className="auth-container">
         <h2>Join a Quiz Room</h2>
         <p>Enter the 6-character code given by your admin.</p>
@@ -47,6 +46,7 @@ function JoinQuiz({ onBack, onQuizJoined }) {
           <button type="submit" className="btn join-btn">Join Quiz</button>
         </form>
       </div>
+      <button onClick={onBack} className="back-btn bottom-back-btn">← Back</button>
     </div>
   );
 }
