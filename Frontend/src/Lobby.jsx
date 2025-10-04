@@ -71,7 +71,7 @@ function Lobby({ quiz, user, onBack, onKicked }) {
   return (
     <div className="lobby-container">
       <div className="lobby-content">
-        <button onClick={onBack} className="back-btn">Back</button>
+        <button onClick={onBack} className="back-btn">← Back</button>
         {isAdmin ? (
           <>
             <h2>Quiz Room Created!</h2>
