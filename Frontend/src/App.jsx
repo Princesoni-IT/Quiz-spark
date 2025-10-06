@@ -14,7 +14,7 @@ import QuizPlayer from './QuizPlayer.jsx';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3000');
+const socket = io(import.meta.env.VITE_API_URL);
 
 function App() {
   const [currentPage, setCurrentPage] = useState('auth');

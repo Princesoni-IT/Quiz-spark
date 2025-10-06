@@ -15,7 +15,7 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEdi
       const userId = localStorage.getItem('userId');
       if (!token || !userId) return;
 
-      const response = await axios.get(`http://localhost:3000/api/quizzes`, { // URL se creatorId hataya
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/quizzes`, { // URL se creatorId hataya
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setQuizzes(response.data);

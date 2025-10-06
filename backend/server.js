@@ -11,7 +11,7 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "http://localhost:5173", methods: ["GET", "POST", "PUT", "DELETE"] }});
+const io = new Server(server, { cors: { origin: ["http://localhost:5173", "https://quiz-spark.onrender.com"], methods: ["GET", "POST", "PUT", "DELETE"] }});
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());

@@ -5,7 +5,7 @@ import QuizCountdown from './QuizCountdown';
 import QuizPlayer from './QuizPlayer';
 
 // Socket connection ko component ke bahar banaya
-const socket = io('http://localhost:3000');
+const socket = io(import.meta.env.VITE_API_URL);
 
 
 function Lobby({ quiz, user, onBack, onKicked }) {

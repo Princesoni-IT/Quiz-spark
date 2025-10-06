@@ -15,7 +15,7 @@ function JoinQuiz({ onBack, onQuizJoined }) {
     try {
       const token = localStorage.getItem('token');
       // Backend se pucha ki is code ka koi quiz hai ya nahi
-      const response = await axios.post('http://localhost:3000/api/quizzes/join', 
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/join`,  
         { roomCode: roomCode.toUpperCase() },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
