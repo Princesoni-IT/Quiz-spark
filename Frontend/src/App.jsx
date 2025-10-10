@@ -32,6 +32,7 @@ function App() {
     if (token) {
       try {
         const decodedUser = jwtDecode(token);
+        localStorage.setItem('userId', decodedUser.userId); // userId bhi save karo
         setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName }); 
         setCurrentPage('home');
       } catch (error) {
@@ -64,6 +65,7 @@ function App() {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         const decodedUser = jwtDecode(response.data.token);
+        localStorage.setItem('userId', decodedUser.userId); // userId bhi save karo
         setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName }); 
         setCurrentPage('home');
       }
@@ -184,7 +186,7 @@ function App() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home': return renderHomePage();
-  case 'dashboard': return <Dashboard onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} onBack={() => setCurrentPage('home')} />;
+      case 'dashboard': return <Dashboard key={Date.now()} onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} onBack={() => setCurrentPage('home')} />;
       case 'createQuiz': return <CreateQuiz onQuizCreated={handleQuizCreated} onBack={() => setCurrentPage('dashboard')} />;
       case 'addQuestions': return <AddQuestions quiz={activeQuiz} onBack={() => setCurrentPage('dashboard')} onFinish={handleQuestionsAdded} />;
       case 'lobby': return <Lobby quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} onKicked={handleKicked} />;
@@ -203,7 +205,7 @@ function App() {
   const isAuthenticated = currentUser && currentPage !== 'auth';
 
   return (
-    <div className="container">
+    <div className={currentPage === 'dashboard' || currentPage === 'createQuiz' || currentPage === 'addQuestions' ? 'main-content' : 'container'}>
       {isAuthenticated && (
         <>
           <Navbar user={currentUser} onProfileClick={() => setIsSidebarOpen(true)} />

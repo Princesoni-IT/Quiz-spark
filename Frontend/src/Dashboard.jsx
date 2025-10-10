@@ -12,16 +12,26 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEdi
   const fetchQuizzes = async () => {
     try {
       const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-      if (!token || !userId) return;
+      if (!token) {
+        setQuizzes([]);
+        return;
+      }
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/quizzes`, { // URL se creatorId hataya
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      setQuizzes(response.data);
+      
+      // Ensure response.data is an array
+      if (Array.isArray(response.data)) {
+        setQuizzes(response.data);
+      } else {
+        console.error("API did not return an array:", response.data);
+        setQuizzes([]);
+      }
     } catch (error) {
       console.error("Failed to fetch quizzes", error);
-      alert("Your Token is Expire Please Login Again.");
+      setQuizzes([]); // Set empty array on error
+      alert("Failed to load quizzes. Please check your connection or login again.");
     }
   };
 
