@@ -221,11 +221,13 @@ io.on('connection', (socket) => {
         if (!quizRooms[roomCode]) quizRooms[roomCode] = { players: [], quiz: null, currentQuestion: -1, quizTimer: null };
         const userExists = quizRooms[roomCode].players.find(p => p.id === user.id);
         if (!userExists) {
-            // Initialize score and hasAnswered for every player
+            // Initialize score, hasAnswered, and questionSequence for every player
             quizRooms[roomCode].players.push({
                 ...user,
                 score: 0,
-                hasAnswered: false
+                hasAnswered: false,
+                currentQuestionIndex: 0, // Track current question for this player
+                questionSequence: [] // Will be filled when quiz starts
             });
         }
         io.to(roomCode).emit('update_student_list', quizRooms[roomCode].players);
@@ -246,7 +248,14 @@ io.on('connection', (socket) => {
     if (!quiz || quiz.questions.length === 0) return;
 
     if(quizRooms[roomCode]) {
-        quizRooms[roomCode].players.forEach(player => player.score = 0);
+        // Assign random question sequence to each player
+        quizRooms[roomCode].players.forEach(player => {
+            player.score = 0;
+            player.currentQuestionIndex = 0;
+            player.hasAnswered = false;
+            // Create shuffled array of question indices
+            player.questionSequence = shuffleArray([...Array(quiz.questions.length).keys()]);
+        });
         quizRooms[roomCode].quiz = quiz;
     }
     
@@ -255,8 +264,8 @@ io.on('connection', (socket) => {
     setTimeout(() => {
         io.to(roomCode).emit('quiz_started', quiz);
         setTimeout(() => {
-            sendQuestion(roomCode, 0);
-        }, 500); // Naya delay yahan hai
+            sendFirstQuestionToAll(roomCode);
+        }, 500);
     }, 4000); 
   });
 
@@ -270,10 +279,15 @@ io.on('connection', (socket) => {
     const player = room.players.find(p => p.id === userId);
 
     if (question && player && !player.hasAnswered) {
-      if (question.correctAnswerIndex === selectedOptionIndex) {
+      // Check if answer is correct (selectedOptionIndex === -1 means no answer/timeout)
+      if (selectedOptionIndex !== -1 && question.correctAnswerIndex === selectedOptionIndex) {
         player.score = (player.score || 0) + quiz.settings.pointsPerQuestion;
       }
       player.hasAnswered = true;
+      player.currentQuestionIndex++;
+      
+      // Send next question to this specific player
+      sendNextQuestionToPlayer(roomCode, player);
     }
     io.to(roomCode).emit('update_leaderboard', room.players);
   });
@@ -292,28 +306,59 @@ io.on('connection', (socket) => {
   });
 });
 
-function sendQuestion(roomCode, questionIndex) {
+// Helper function to shuffle array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// Send first question to all players
+function sendFirstQuestionToAll(roomCode) {
+    const room = quizRooms[roomCode];
+    if (!room || !room.quiz) return;
+    
+    room.players.forEach(player => {
+        sendNextQuestionToPlayer(roomCode, player);
+    });
+}
+
+// Send next question to a specific player
+function sendNextQuestionToPlayer(roomCode, player) {
     const room = quizRooms[roomCode];
     if (!room || !room.quiz) return;
     
     const { quiz } = room;
-
-    if (questionIndex >= quiz.questions.length) {
-        if(room.quizTimer) clearTimeout(room.quizTimer);
-        io.to(roomCode).emit('quiz_finished', room.players);
+    
+    // Check if player has finished all questions
+    if (player.currentQuestionIndex >= quiz.questions.length) {
+        // Notify this player that they're done
+        io.to(player.socketId).emit('player_finished');
+        
+        // Check if all players are done
+        const allFinished = room.players.every(p => p.currentQuestionIndex >= quiz.questions.length);
+        if (allFinished) {
+            io.to(roomCode).emit('quiz_finished', room.players);
+        }
         return;
     }
-
-    room.players.forEach(player => player.hasAnswered = false);
-    room.currentQuestion = questionIndex;
+    
+    // Get the question index from player's shuffled sequence
+    const questionIndex = player.questionSequence[player.currentQuestionIndex];
     const question = quiz.questions[questionIndex];
-    io.to(roomCode).emit('new_question', { question, questionNumber: questionIndex + 1 });
-
-    if (room.quizTimer) clearTimeout(room.quizTimer);
-
-    room.quizTimer = setTimeout(() => {
-        sendQuestion(roomCode, questionIndex + 1);
-    }, (quiz.settings.timePerQuestion + 2) * 1000);
+    
+    player.hasAnswered = false;
+    
+    // Send question only to this specific player
+    io.to(player.socketId).emit('new_question', { 
+        question, 
+        questionNumber: player.currentQuestionIndex + 1,
+        totalQuestions: quiz.questions.length,
+        questionIndex: questionIndex // Send actual index for answer submission
+    });
 }
 
 // --- Server Start ---

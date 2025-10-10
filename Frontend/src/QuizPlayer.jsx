@@ -5,11 +5,14 @@ import './App.css';
 function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [questionNumber, setQuestionNumber] = useState(0);
+    const [questionIndex, setQuestionIndex] = useState(0); // Actual question index from backend
+    const [totalQuestions, setTotalQuestions] = useState(quiz.settings.numQuestions);
     const [selectedOption, setSelectedOption] = useState(null);
     const [submitted, setSubmitted] = useState(false);
     const [timer, setTimer] = useState(quiz.settings.timePerQuestion);
     const [scores, setScores] = useState([]);
     const [isFinished, setIsFinished] = useState(false);
+    const [playerFinished, setPlayerFinished] = useState(false);
     const isAdmin = user.id === quiz.creatorId;
 
     // Tab locking (sirf student ke liye)
@@ -44,9 +47,17 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
         socket.on('new_question', (data) => {
             setCurrentQuestion(data.question);
             setQuestionNumber(data.questionNumber);
+            setQuestionIndex(data.questionIndex); // Store actual question index
+            setTotalQuestions(data.totalQuestions || quiz.settings.numQuestions);
             setSelectedOption(null);
             setSubmitted(false);
+            setPlayerFinished(false);
             setTimer(quiz.settings.timePerQuestion);
+        });
+
+        socket.on('player_finished', () => {
+            setPlayerFinished(true);
+            setCurrentQuestion(null);
         });
 
         socket.on('quiz_finished', (finalScores) => {
@@ -68,18 +79,40 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
         return () => {
             clearInterval(interval);
             socket.off('new_question');
+            socket.off('player_finished');
             socket.off('quiz_finished');
             socket.off('update_leaderboard');
         };
     }, [socket, quiz]);
 
-    const handleAnswerSubmit = () => {
-        if (selectedOption === null) return;
+    // Auto-submit when timer reaches 0
+    useEffect(() => {
+        if (timer === 0 && !submitted && currentQuestion && !isAdmin) {
+            // Auto-submit even if no option selected (will be marked wrong)
+            autoSubmit();
+        }
+    }, [timer, submitted, currentQuestion, isAdmin]);
+
+    const autoSubmit = () => {
         setSubmitted(true);
         socket.emit('submit_answer', {
-            roomCode: quiz.quizCode, // Use roomCode instead of quizCode
+            roomCode: quiz.quizCode,
             userId: user.id,
-            questionIndex: questionNumber - 1,
+            questionIndex: questionIndex,
+            selectedOptionIndex: selectedOption !== null ? selectedOption : -1 // -1 means no answer
+        });
+    };
+
+    const handleAnswerSubmit = () => {
+        if (selectedOption === null) {
+            alert('Please select an option before submitting!');
+            return;
+        }
+        setSubmitted(true);
+        socket.emit('submit_answer', {
+            roomCode: quiz.quizCode,
+            userId: user.id,
+            questionIndex: questionIndex, // Use actual question index from backend
             selectedOptionIndex: selectedOption
         });
     };
@@ -99,6 +132,16 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
     }
 
     // Student View
+    if (playerFinished) {
+        return (
+            <div className="quiz-player-container">
+                <h2>🎉 You've completed all questions!</h2>
+                <p>Waiting for other students to finish...</p>
+                <Leaderboard scores={scores} onBack={onBack} />
+            </div>
+        );
+    }
+
     if (!currentQuestion) {
         return <div className="quiz-player-container"><h2>Waiting for the first question...</h2></div>;
     }
@@ -106,7 +149,7 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
     return (
         <div className="quiz-player-container">
             <div className="quiz-player-header">
-                <h3>Question {questionNumber}/{quiz.settings.numQuestions}</h3>
+                <h3>Question {questionNumber}/{totalQuestions}</h3>
                 <div className="timer">{timer}s</div>
             </div>
             <div className="question-text">
