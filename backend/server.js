@@ -15,7 +15,16 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: ["http://localhost:5173", "https://quiz-spark.netlify.app"], methods: ["GET", "POST", "PUT", "DELETE"] }});
+const io = new Server(server, { 
+    cors: { 
+        origin: [
+            "http://localhost:5173",
+            "https://quiz-spark.netlify.app",
+            "https://quiz-spark-xxxx.netlify.app"  // Replace xxxx with your actual Netlify URL
+        ], 
+        methods: ["GET", "POST", "PUT", "DELETE"] 
+    }
+});
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -81,7 +90,7 @@ const connectDB = async () => {
 
 const userSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true }, // unique: true already creates index
     password: { type: String, required: true },
     otp: { type: String },
     otpVerified: { type: Boolean, default: false },
@@ -90,7 +99,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Add indexes for better query performance
-userSchema.index({ email: 1 });
+// Note: email index already created by unique: true, no need to add again
 userSchema.index({ createdAt: -1 });
 
 const User = mongoose.model('User', userSchema);

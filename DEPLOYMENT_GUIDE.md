@@ -50,17 +50,26 @@ GMAIL_PASS=your_gmail_app_password
 PORT=3000
 ```
 
-#### **C. Update `package.json` scripts:**
+#### **C. Verify `package.json` scripts:**
+Your scripts are already correct:
 ```json
 {
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "start": "node server.js",  // ✅ For production (Render)
+    "dev": "nodemon server.js"  // ✅ For local development
   }
 }
+```
+
+**Local Development:**
+```bash
+cd backend
+node server.js
+```
+
+**Production (Render will use):**
+```bash
+npm start
 ```
 
 ---
@@ -103,6 +112,13 @@ npm run build
 ```
 
 This creates a `dist` folder with optimized files.
+
+**Note:** Your local development command is:
+```bash
+npm run dev  # For local testing
+```
+
+But for deployment, always use `npm run build` to create production files.
 
 ---
 
