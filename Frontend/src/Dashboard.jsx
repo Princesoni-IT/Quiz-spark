@@ -41,7 +41,7 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEdi
     if (window.confirm("Are you sure you want to delete this quiz permanently?")) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:3000/api/quizzes/${quizId}`, {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         alert("Quiz deleted successfully!");

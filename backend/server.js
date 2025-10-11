@@ -19,7 +19,8 @@ const io = new Server(server, { cors: { origin: ["http://localhost:5173", "https
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // --- Multer Configuration for File Upload ---
 // Ensure uploads directory exists
@@ -83,9 +84,20 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     otp: { type: String },
-    otpVerified: { type: Boolean, default: false }
+    otpVerified: { type: Boolean, default: false },
+    profilePicture: { type: String, default: '' } // URL or base64 string
 });
 const User = mongoose.model('User', userSchema);
+
+const feedbackSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userName: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true },
+    rating: { type: Number, min: 1, max: 5 },
+    createdAt: { type: Date, default: Date.now }
+});
+const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 const questionSchema = new mongoose.Schema({ text: { type: String, required: true }, options: [{ type: String, required: true }], correctAnswerIndex: { type: Number, required: true }});
 
@@ -252,6 +264,368 @@ app.post('/api/quizzes/join', authMiddleware, async (req, res) => {
         res.status(200).json({ message: "Quiz found!", quiz });
     } catch (error) {
         res.status(500).json({ message: "Server error while joining quiz." });
+    }
+});
+
+// --- User Profile Routes ---
+
+// Change Password
+app.post('/api/user/change-password', authMiddleware, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: "Please provide both current and new password." });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: "New password must be at least 6 characters long." });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Current password is incorrect." });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Password changed successfully!" });
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).json({ message: "Server error while changing password." });
+    }
+});
+
+// Update Profile Picture
+app.post('/api/user/profile-picture', authMiddleware, async (req, res) => {
+    try {
+        const { profilePicture } = req.body; // base64 string or empty string to remove
+        
+        // Allow empty string to remove profile picture
+        if (profilePicture === undefined || profilePicture === null) {
+            return res.status(400).json({ message: "No profile picture data provided." });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        user.profilePicture = profilePicture; // Can be empty string to remove
+        await user.save();
+
+        const message = profilePicture === '' 
+            ? "Profile picture removed successfully!" 
+            : "Profile picture updated successfully!";
+
+        res.status(200).json({ 
+            message: message,
+            profilePicture: user.profilePicture
+        });
+    } catch (error) {
+        console.error("Error updating profile picture:", error);
+        res.status(500).json({ message: "Server error while updating profile picture." });
+    }
+});
+
+// Get User Profile
+app.get('/api/user/profile', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select('-password -otp');
+        if (!user) return res.status(404).json({ message: "User not found." });
+        
+        res.status(200).json({ user });
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        res.status(500).json({ message: "Server error while fetching profile." });
+    }
+});
+
+// Submit Feedback
+app.post('/api/feedback', authMiddleware, async (req, res) => {
+    try {
+        const { message, rating } = req.body;
+        
+        if (!message) {
+            return res.status(400).json({ message: "Feedback message is required." });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        const feedback = new Feedback({
+            userId: req.user.userId,
+            userName: user.fullName,
+            email: user.email,
+            message,
+            rating: rating || 5
+        });
+
+        await feedback.save();
+        res.status(201).json({ message: "Thank you for your feedback!" });
+    } catch (error) {
+        console.error("Error submitting feedback:", error);
+        res.status(500).json({ message: "Server error while submitting feedback." });
+    }
+});
+
+// Get All Feedbacks (Admin only - specific email)
+app.get('/api/feedback', authMiddleware, async (req, res) => {
+    try {
+        // Check if user is the admin
+        const user = await User.findById(req.user.userId);
+        const adminEmail = 'princesoni.it@gmail.com';
+        
+        if (user.email !== adminEmail) {
+            return res.status(403).json({ 
+                message: "Access denied. Only admin can view feedbacks." 
+            });
+        }
+
+        const feedbacks = await Feedback.find().sort({ createdAt: -1 }).limit(50);
+        res.status(200).json({ feedbacks });
+    } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        res.status(500).json({ message: "Server error while fetching feedbacks." });
+    }
+});
+
+// Delete Feedback (Admin only)
+app.delete('/api/feedback/:feedbackId', authMiddleware, async (req, res) => {
+    try {
+        // Check if user is the admin
+        const user = await User.findById(req.user.userId);
+        const adminEmail = 'princesoni.it@gmail.com';
+        
+        if (user.email !== adminEmail) {
+            return res.status(403).json({ 
+                message: "Access denied. Only admin can delete feedbacks." 
+            });
+        }
+
+        const { feedbackId } = req.params;
+        
+        console.log('Deleting feedback with ID:', feedbackId);
+        
+        const deletedFeedback = await Feedback.findByIdAndDelete(feedbackId);
+        
+        if (!deletedFeedback) {
+            return res.status(404).json({ message: "Feedback not found." });
+        }
+
+        console.log('Feedback deleted successfully:', deletedFeedback);
+        res.status(200).json({ message: "Feedback deleted successfully!" });
+    } catch (error) {
+        console.error("Error deleting feedback:", error);
+        res.status(500).json({ message: "Server error while deleting feedback.", error: error.message });
+    }
+});
+
+// --- Admin User Management Routes ---
+
+// Get All Users (Admin only)
+app.get('/api/admin/users', authMiddleware, async (req, res) => {
+    try {
+        // Check if user is the admin
+        const user = await User.findById(req.user.userId);
+        const adminEmail = 'princesoni.it@gmail.com';
+        
+        if (user.email !== adminEmail) {
+            return res.status(403).json({ 
+                message: "Access denied. Only admin can view users." 
+            });
+        }
+
+        const users = await User.find().select('-password -otp').sort({ createdAt: -1 });
+        res.status(200).json({ users });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "Server error while fetching users." });
+    }
+});
+
+// Delete User (Admin only)
+app.delete('/api/admin/users/:userId', authMiddleware, async (req, res) => {
+    try {
+        // Check if user is the admin
+        const admin = await User.findById(req.user.userId);
+        const adminEmail = 'princesoni.it@gmail.com';
+        
+        if (admin.email !== adminEmail) {
+            return res.status(403).json({ 
+                message: "Access denied. Only admin can delete users." 
+            });
+        }
+
+        const { userId } = req.params;
+
+        // Prevent admin from deleting themselves
+        if (userId === req.user.userId) {
+            return res.status(400).json({ 
+                message: "You cannot delete your own account." 
+            });
+        }
+
+        // Delete user's quizzes first
+        await Quiz.deleteMany({ creatorId: userId });
+
+        // Delete user's feedbacks
+        await Feedback.deleteMany({ userId: userId });
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: "User and all associated data deleted successfully!" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ message: "Server error while deleting user." });
+    }
+});
+
+// --- Forgot Password Routes ---
+
+// Step 1: Send OTP for password reset
+app.post('/api/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ message: "Email is required." });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "No account found with this email." });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        await user.save();
+
+        // Send OTP via email
+        console.log('=== FORGOT PASSWORD OTP ===');
+        console.log('Email:', email);
+        console.log('OTP:', otp);
+        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
+        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
+        console.log('========================');
+
+        // Check if email is configured
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+            console.warn('⚠️ Email not configured! OTP printed in console above.');
+            return res.status(200).json({ 
+                message: "OTP generated successfully! (Check server console for OTP - Email not configured)" 
+            });
+        }
+
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.GMAIL_USER,
+                    pass: process.env.GMAIL_PASS
+                }
+            });
+
+            const mailOptions = {
+                from: process.env.GMAIL_USER,
+                to: email,
+                subject: 'Quiz Spark - Password Reset OTP',
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+                        <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
+                            <h2 style="color: #5a67d8;">🔑 Password Reset Request</h2>
+                            <p>Hello ${user.fullName},</p>
+                            <p>You requested to reset your password. Use the OTP below to proceed:</p>
+                            <div style="background-color: #f0f4f8; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                                <h1 style="color: #5a67d8; margin: 0; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
+                            </div>
+                            <p>This OTP is valid for 10 minutes.</p>
+                            <p>If you didn't request this, please ignore this email.</p>
+                            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+                            <p style="color: #999; font-size: 12px;">Quiz Spark - Team Spark</p>
+                        </div>
+                    </div>
+                `
+            };
+
+            await transporter.sendMail(mailOptions);
+            res.status(200).json({ message: "OTP sent to your email successfully!" });
+        } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+            res.status(200).json({ 
+                message: "OTP generated! Check server console (Email sending failed)" 
+            });
+        }
+    } catch (error) {
+        console.error("Error sending reset OTP:", error);
+        res.status(500).json({ message: "Failed to send OTP. Please try again." });
+    }
+});
+
+// Step 2: Verify OTP for password reset
+app.post('/api/verify-reset-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required." });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        if (user.otp !== otp) {
+            return res.status(400).json({ message: "Invalid OTP. Please try again." });
+        }
+
+        res.status(200).json({ message: "OTP verified successfully! You can now reset your password." });
+    } catch (error) {
+        console.error("Error verifying reset OTP:", error);
+        res.status(500).json({ message: "Server error while verifying OTP." });
+    }
+});
+
+// Step 3: Reset Password
+app.post('/api/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ message: "Email, OTP, and new password are required." });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters long." });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        if (user.otp !== otp) {
+            return res.status(400).json({ message: "Invalid OTP. Please try again." });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.otp = ''; // Clear OTP after successful reset
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successfully! You can now login with your new password." });
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        res.status(500).json({ message: "Server error while resetting password." });
     }
 });
 

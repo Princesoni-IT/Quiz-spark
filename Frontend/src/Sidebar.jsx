@@ -1,11 +1,31 @@
-import React from 'react';
-import './Sidebar.css'; // Is file ko agle step mein banayenge
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './Sidebar.css';
 
-function Sidebar({ isOpen, onClose, onLogout }) {
-  // Ye functions abhi sirf alert dikhayenge.
-  // Inhe implement karne ke liye aapko alag se components banane honge.
-  const handleOptionClick = (option) => {
-    alert(`${option} functionality abhi implement nahi hui hai.`);
+function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkIfAdmin();
+  }, []);
+
+  const checkIfAdmin = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/user/profile`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      // Only show feedbacks to specific admin email
+      const adminEmail = 'princesoni.it@gmail.com';
+      setIsAdmin(response.data.user.email === adminEmail);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  };
+
+  const handleOptionClick = (page) => {
+    onNavigate(page);
     onClose();
   };
 
@@ -21,16 +41,33 @@ function Sidebar({ isOpen, onClose, onLogout }) {
           <button onClick={onClose} className="close-btn">&times;</button>
         </div>
         <ul className="sidebar-menu" style={{maxHeight: 'auto', overflowY: 'auto'}}>
-          {/* <li onClick={() => handleOptionClick('Change Name')}>Change Name</li>
-          <li onClick={() => handleOptionClick('Change Password')}>Change Password</li>
-          <li onClick={() => handleOptionClick('Add Email')}>Add Email</li>
-          <li onClick={() => handleOptionClick('Add Profile Pic')}>Add Profile Pic</li>
-          <li onClick={() => handleOptionClick('College/school Name ')}>College/school Name</li>
-          <li onClick={() => handleOptionClick('Feedback')}>Feedback</li>
-          <li onClick={() => handleOptionClick('About')}>About</li>
-          <li onClick={() => handleOptionClick('Certification')}>Certification</li>
-          <li onClick={() => handleOptionClick('Quiz History')}>Quiz History</li> */}
-          <li onClick={onLogout}>Logout</li>
+          <li onClick={() => handleOptionClick('changePassword')}>🔒 Change Password</li>
+          <li onClick={() => handleOptionClick('profilePicture')}>📸 Profile Picture</li>
+          <li onClick={() => handleOptionClick('feedback')}>💬 Give Feedback</li>
+          <li onClick={() => handleOptionClick('about')}>ℹ️ About</li>
+          
+          {/* Admin Only Options */}
+          {isAdmin && (
+            <>
+              <li style={{ 
+                borderTop: '2px solid #5a67d8', 
+                marginTop: '10px', 
+                paddingTop: '10px',
+                color: '#5a67d8',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                pointerEvents: 'none'
+              }}>
+                👑 ADMIN PANEL
+              </li>
+              <li onClick={() => handleOptionClick('userManagement')}>👥 User Management</li>
+              <li onClick={() => handleOptionClick('viewFeedbacks')}>📬 View Feedbacks</li>
+            </>
+          )}
+          
+          <li onClick={onLogout} style={{ borderTop: '1px solid #e0e0e0', marginTop: '10px', paddingTop: '10px' }}>
+            🚪 Logout
+          </li>
         </ul>
       </div>
     </>

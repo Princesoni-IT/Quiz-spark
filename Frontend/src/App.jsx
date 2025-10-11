@@ -9,8 +9,15 @@ import AddQuestions from './AddQuestions.jsx';
 import Lobby from './Lobby.jsx';
 import Dashboard from './Dashboard.jsx'; 
 import JoinQuiz from './JoinQuiz.jsx';
-import QuizCountdown from './QuizCountdown.jsx'; // Naya import
+import QuizCountdown from './QuizCountdown.jsx';
 import QuizPlayer from './QuizPlayer.jsx';
+import ChangePassword from './ChangePassword.jsx';
+import ProfilePicture from './ProfilePicture.jsx';
+import Feedback from './Feedback.jsx';
+import AdminFeedback from './AdminFeedback.jsx';
+import UserManagement from './UserManagement.jsx';
+import About from './About.jsx';
+import ForgotPassword from './ForgotPassword.jsx';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
 
@@ -60,7 +67,7 @@ function App() {
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/api/login', { email, password });
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, { email, password });
       alert(response.data.message);
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -83,7 +90,7 @@ function App() {
       // Step 1: Register and send OTP
       const userData = { fullName, email, password };
       try {
-        const response = await axios.post('http://localhost:3000/api/register', userData);
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, userData);
         alert(response.data.message);
         setOtpSent(true);
       } catch (error) {
@@ -92,7 +99,7 @@ function App() {
     } else {
       // Step 2: Verify OTP
       try {
-        const response = await axios.post('http://localhost:3000/api/verify-otp', { email, otp });
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/verify-otp`, { email, otp });
         alert(response.data.message);
         setOtpSent(false);
         setIsLoginView(true);
@@ -121,7 +128,7 @@ function App() {
   const handleQuestionsAdded = async (questions) => { 
     try {
         const token = localStorage.getItem('token');
-        await axios.post(`http://localhost:3000/api/quizzes/${activeQuiz._id}/questions`, { questions }, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/quizzes/${activeQuiz._id}/questions`, { questions }, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         alert("Questions saved successfully! Returning to dashboard.");
@@ -164,7 +171,14 @@ function App() {
         )}
         <div className="auth-buttons">{isLoginView ? (<button type="submit" className="btn login-btn">Login</button>) : (<button type="submit" className="btn signup-btn">{otpSent ? 'Verify OTP' : 'Sign Up'}</button>)}</div>
       </form>
-      {isLoginView ? (<p>Don't have an account? <a href="#" onClick={() => setIsLoginView(false)}>Sign Up</a></p>) : (<p>Already have an account? <a href="#" onClick={() => setIsLoginView(true)}>Login</a></p>)}
+      {isLoginView ? (
+        <>
+          <p>Don't have an account? <a href="#" onClick={() => setIsLoginView(false)}>Sign Up</a></p>
+          <p><a href="#" onClick={() => setCurrentPage('forgotPassword')} style={{ color: '#5a67d8', fontWeight: 600 }}>Forgot Password?</a></p>
+        </>
+      ) : (
+        <p>Already have an account? <a href="#" onClick={() => setIsLoginView(true)}>Login</a></p>
+      )}
     </div>
   );
 
@@ -183,6 +197,10 @@ function App() {
     </>
   );
 
+  const handleSidebarNavigate = (page) => {
+    setCurrentPage(page);
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home': return renderHomePage();
@@ -195,6 +213,20 @@ function App() {
         return <QuizCountdown />;
       case 'quizPlayer':
         return <QuizPlayer socket={socket} quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('dashboard')} />;
+      case 'changePassword':
+        return <ChangePassword onBack={() => setCurrentPage('home')} />;
+      case 'profilePicture':
+        return <ProfilePicture onBack={() => setCurrentPage('home')} user={currentUser} />;
+      case 'feedback':
+        return <Feedback onBack={() => setCurrentPage('home')} />;
+      case 'viewFeedbacks':
+        return <AdminFeedback onBack={() => setCurrentPage('home')} />;
+      case 'userManagement':
+        return <UserManagement onBack={() => setCurrentPage('home')} />;
+      case 'about':
+        return <About onBack={() => setCurrentPage('home')} />;
+      case 'forgotPassword':
+        return <ForgotPassword onBack={() => setCurrentPage('auth')} onLoginRedirect={() => { setCurrentPage('auth'); setIsLoginView(true); }} />;
       case 'auth': 
       default:
         return renderAuthPage();
@@ -209,7 +241,13 @@ function App() {
       {isAuthenticated && (
         <>
           <Navbar user={currentUser} onProfileClick={() => setIsSidebarOpen(true)} />
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={handleLogout} />
+          <Sidebar 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)} 
+            onLogout={handleLogout}
+            onNavigate={handleSidebarNavigate}
+            user={currentUser}
+          />
         </>
       )}
       {renderCurrentPage()}
