@@ -27,7 +27,18 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS configuration
+app.use(cors({
+    origin: [
+        "http://localhost:5173",
+        "https://quiz-spark.netlify.app",
+        /\.netlify\.app$/
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
