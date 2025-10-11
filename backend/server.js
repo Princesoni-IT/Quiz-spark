@@ -7,6 +7,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const xlsx = require('xlsx');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +20,50 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// --- Multer Configuration for File Upload ---
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['.xlsx', '.xls', '.csv'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        console.log('File filter - originalname:', file.originalname, 'ext:', ext);
+        if (allowedTypes.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed!'));
+        }
+    }
+});
+
+// Multer error handling middleware
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        console.log('Multer error:', error);
+        return res.status(400).json({ message: error.message });
+    } else if (error) {
+        console.log('Upload error:', error);
+        return res.status(400).json({ message: error.message });
+    }
+    next();
+});
 
 // --- Database Connection ---
 const connectDB = async () => {
@@ -204,6 +252,174 @@ app.post('/api/quizzes/join', authMiddleware, async (req, res) => {
         res.status(200).json({ message: "Quiz found!", quiz });
     } catch (error) {
         res.status(500).json({ message: "Server error while joining quiz." });
+    }
+});
+
+// Test upload endpoint
+app.post('/api/test-upload', upload.single('file'), (req, res) => {
+    console.log('Test upload - File received:', req.file);
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file received' });
+    }
+    res.json({ message: 'File uploaded successfully!', file: req.file });
+});
+
+// Upload Excel/CSV file and parse questions
+app.post('/api/quizzes/:quizId/upload-questions', authMiddleware, upload.single('file'), async (req, res) => {
+    let filePath = null;
+    try {
+        console.log('=== Upload Request Started ===');
+        console.log('Quiz ID:', req.params.quizId);
+        console.log('File received:', req.file ? 'YES' : 'NO');
+        
+        if (!req.file) {
+            console.log('ERROR: No file in request');
+            return res.status(400).json({ message: 'No file uploaded. Please select a file.' });
+        }
+
+        filePath = req.file.path;
+        console.log('File path:', filePath);
+        console.log('File name:', req.file.originalname);
+        console.log('File size:', req.file.size, 'bytes');
+
+        const quiz = await Quiz.findById(req.params.quizId);
+        if (!quiz) {
+            console.log('ERROR: Quiz not found');
+            return res.status(404).json({ message: "Quiz not found" });
+        }
+        if (quiz.creatorId.toString() !== req.user.userId) {
+            console.log('ERROR: Unauthorized user');
+            return res.status(403).json({ message: "You are not authorized." });
+        }
+
+        console.log('Reading file...');
+        // Read the uploaded file with better error handling
+        let workbook;
+        try {
+            workbook = xlsx.readFile(filePath, { 
+                cellDates: true,
+                cellNF: false,
+                cellText: false
+            });
+        } catch (readError) {
+            console.error('File read error:', readError);
+            throw new Error('Failed to read file. Please ensure it is a valid Excel or CSV file.');
+        }
+
+        const sheetName = workbook.SheetNames[0];
+        console.log('Sheet name:', sheetName);
+        
+        const worksheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(worksheet, { 
+            defval: '',
+            blankrows: false
+        });
+
+        console.log('Total rows read:', data.length);
+
+        if (data.length === 0) {
+            throw new Error('The file is empty or has no valid data.');
+        }
+
+        // Filter out empty rows
+        const filteredData = data.filter(row => {
+            return row.Question && (row.Option1 || row.Option2 || row.Option3 || row.Option4);
+        });
+
+        console.log('Valid rows after filtering:', filteredData.length);
+
+        if (filteredData.length === 0) {
+            throw new Error('No valid questions found. Please check your file format.');
+        }
+
+        // Parse questions from Excel
+        const questions = [];
+        const errors = [];
+
+        for (let i = 0; i < filteredData.length; i++) {
+            const row = filteredData[i];
+            const rowNum = i + 2; // Excel row number (accounting for header)
+
+            try {
+                // Check for missing fields
+                const missingFields = [];
+                if (!row.Question || row.Question.toString().trim() === '') missingFields.push('Question');
+                if (!row.Option1 || row.Option1.toString().trim() === '') missingFields.push('Option1');
+                if (!row.Option2 || row.Option2.toString().trim() === '') missingFields.push('Option2');
+                if (!row.Option3 || row.Option3.toString().trim() === '') missingFields.push('Option3');
+                if (!row.Option4 || row.Option4.toString().trim() === '') missingFields.push('Option4');
+                if (!row.CorrectAnswer && row.CorrectAnswer !== 0) missingFields.push('CorrectAnswer');
+                
+                if (missingFields.length > 0) {
+                    errors.push(`Row ${rowNum}: Missing ${missingFields.join(', ')}`);
+                    continue;
+                }
+
+                const correctAnswerIndex = parseInt(row.CorrectAnswer) - 1; // Convert 1-4 to 0-3
+                if (isNaN(correctAnswerIndex) || correctAnswerIndex < 0 || correctAnswerIndex > 3) {
+                    errors.push(`Row ${rowNum}: CorrectAnswer must be 1, 2, 3, or 4 (got: ${row.CorrectAnswer})`);
+                    continue;
+                }
+
+                questions.push({
+                    text: row.Question.toString().trim(),
+                    options: [
+                        row.Option1.toString().trim(),
+                        row.Option2.toString().trim(),
+                        row.Option3.toString().trim(),
+                        row.Option4.toString().trim()
+                    ],
+                    correctAnswerIndex: correctAnswerIndex
+                });
+            } catch (rowError) {
+                errors.push(`Row ${rowNum}: ${rowError.message}`);
+            }
+        }
+
+        console.log('Questions parsed:', questions.length);
+        console.log('Errors:', errors.length);
+
+        if (questions.length === 0) {
+            const errorMsg = errors.length > 0 
+                ? `No valid questions found. Errors:\n${errors.join('\n')}`
+                : 'No valid questions found in the file.';
+            throw new Error(errorMsg);
+        }
+
+        // Add questions to quiz
+        quiz.questions = questions;
+        await quiz.save();
+        console.log('Questions saved to database');
+
+        // Delete uploaded file after processing
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log('Temporary file deleted');
+        }
+
+        const responseMsg = errors.length > 0
+            ? `Successfully uploaded ${questions.length} questions! (${errors.length} rows had errors)`
+            : `Successfully uploaded ${questions.length} questions!`;
+
+        res.status(200).json({ 
+            message: responseMsg,
+            questionsCount: questions.length,
+            errors: errors.length > 0 ? errors : undefined,
+            quiz 
+        });
+    } catch (error) {
+        // Clean up file if error occurs
+        if (filePath && fs.existsSync(filePath)) {
+            try {
+                fs.unlinkSync(filePath);
+                console.log('Temporary file deleted after error');
+            } catch (unlinkError) {
+                console.error('Failed to delete temp file:', unlinkError);
+            }
+        }
+        console.error('=== Upload Error ===');
+        console.error(error);
+        res.status(500).json({ message: error.message || 'Failed to upload questions' });
     }
 });
 

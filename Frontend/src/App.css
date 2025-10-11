@@ -1,3 +1,4 @@
+/* App.css - Yahan hum apni website ko sundar banayenge. */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 .blue-back-btn {
@@ -20,9 +21,6 @@
   transform: scale(1.05);
   box-shadow: 0 5px 15px rgba(0,0,0,0.13);
 }
-/* App.css - Yahan hum apni website ko sundar banayenge. */
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
 body {
   margin: 0;
