@@ -303,6 +303,31 @@ app.post('/api/user/change-password', authMiddleware, async (req, res) => {
     }
 });
 
+// Change Username
+app.put('/api/user/username', authMiddleware, async (req, res) => {
+    try {
+        const { newUsername } = req.body;
+        
+        if (!newUsername || newUsername.trim().length < 3) {
+            return res.status(400).json({ message: "Username must be at least 3 characters long." });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) return res.status(404).json({ message: "User not found." });
+
+        user.fullName = newUsername.trim();
+        await user.save();
+
+        res.status(200).json({ 
+            message: "Username changed successfully!",
+            fullName: user.fullName
+        });
+    } catch (error) {
+        console.error("Error changing username:", error);
+        res.status(500).json({ message: "Server error while changing username." });
+    }
+});
+
 // Update Profile Picture
 app.post('/api/user/profile-picture', authMiddleware, async (req, res) => {
     try {

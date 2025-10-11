@@ -1,57 +1,96 @@
-
 .navbar {
-  width: 100% ;
-  background: linear-gradient(90deg, skyblue 60%, #6a82fb 100%);
-  color: beige;
-  padding: 12px 18px;
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1001;
+  backdrop-filter: blur(10px);
 }
+
 .navbar-brand {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
 }
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
 .navbar-profile {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 25px;
-  transition: background 0.2s;
+  padding: 8px 16px;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
 }
+
 .navbar-profile:hover {
-  background: #5f7afe;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
 .profile-pic {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid black;
+  border: 2px solid white;
   background: #eaf3fb;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
 .profile-name {
   font-weight: 600;
   font-size: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-@media (max-width: 600px) {
+/* Mobile Responsive */
+@media (max-width: 480px) {
   .navbar {
-    padding: 10px 8px;
+    padding: 12px 15px;
   }
   .navbar-brand {
     font-size: 1.1rem;
   }
   .profile-pic {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
+  }
+  .profile-name {
+    display: none; /* Hide name on very small screens */
+  }
+  .navbar-profile {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .navbar {
+    padding: 14px 20px;
+  }
+  .navbar-brand {
+    font-size: 1.3rem;
+  }
+  .profile-pic {
+    width: 36px;
+    height: 36px;
   }
   .profile-name {
     font-size: 0.95rem;

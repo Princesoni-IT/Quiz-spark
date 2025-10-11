@@ -41,6 +41,7 @@ function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
           <button onClick={onClose} className="close-btn">&times;</button>
         </div>
         <ul className="sidebar-menu" style={{maxHeight: 'auto', overflowY: 'auto'}}>
+          <li onClick={() => handleOptionClick('changeUsername')}>✏️ Change Username</li>
           <li onClick={() => handleOptionClick('changePassword')}>🔒 Change Password</li>
           <li onClick={() => handleOptionClick('profilePicture')}>📸 Profile Picture</li>
           <li onClick={() => handleOptionClick('feedback')}>💬 Give Feedback</li>

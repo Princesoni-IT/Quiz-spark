@@ -4,6 +4,7 @@ import './Navbar.css';
 
 function Navbar({ user, onProfileClick }) {
   const [profilePicture, setProfilePicture] = useState('');
+  const [userName, setUserName] = useState('');
   const defaultAvatar = 'https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg';
 
   useEffect(() => {
@@ -22,6 +23,11 @@ function Navbar({ user, onProfileClick }) {
       
       if (response.data.user.profilePicture) {
         setProfilePicture(response.data.user.profilePicture);
+      }
+      
+      // Set username from API response
+      if (response.data.user.fullName) {
+        setUserName(response.data.user.fullName);
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
@@ -47,7 +53,7 @@ function Navbar({ user, onProfileClick }) {
             border: '2px solid white'
           }}
         />
-        <span className="profile-name">{user?.fullName || 'User'}</span>
+        <span className="profile-name">{userName || user?.fullName || 'User'}</span>
       </div>
     </nav>
   );

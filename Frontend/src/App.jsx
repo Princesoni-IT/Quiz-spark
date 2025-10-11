@@ -12,6 +12,7 @@ import JoinQuiz from './JoinQuiz.jsx';
 import QuizCountdown from './QuizCountdown.jsx';
 import QuizPlayer from './QuizPlayer.jsx';
 import ChangePassword from './ChangePassword.jsx';
+import ChangeUsername from './ChangeUsername.jsx';
 import ProfilePicture from './ProfilePicture.jsx';
 import Feedback from './Feedback.jsx';
 import AdminFeedback from './AdminFeedback.jsx';
@@ -34,13 +35,38 @@ function App() {
   // Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Fetch current user from API
+  const fetchCurrentUser = async (token) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/user/profile`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      if (response.data.user) {
+        setCurrentUser({
+          id: response.data.user._id,
+          fullName: response.data.user.fullName,
+          email: response.data.user.email
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // Fallback to JWT data
+      const decodedUser = jwtDecode(token);
+      setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName });
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decodedUser = jwtDecode(token);
         localStorage.setItem('userId', decodedUser.userId); // userId bhi save karo
-        setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName }); 
+        
+        // Fetch fresh user data from API
+        fetchCurrentUser(token);
         setCurrentPage('home');
       } catch (error) {
         localStorage.clear();
@@ -215,6 +241,8 @@ function App() {
         return <QuizPlayer socket={socket} quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('dashboard')} />;
       case 'changePassword':
         return <ChangePassword onBack={() => setCurrentPage('home')} />;
+      case 'changeUsername':
+        return <ChangeUsername onBack={() => setCurrentPage('home')} user={currentUser} />;
       case 'profilePicture':
         return <ProfilePicture onBack={() => setCurrentPage('home')} user={currentUser} />;
       case 'feedback':

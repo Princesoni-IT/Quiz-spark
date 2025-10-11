@@ -49,6 +49,41 @@
   border-bottom: none; color: #e74c3c; font-weight: 600;
 }
 
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 85vw;
+    max-width: 100vw;
+    right: -85vw;
+  }
+  .sidebar-header {
+    padding: 18px 15px;
+  }
+  .sidebar-header h3 {
+    font-size: 1rem;
+  }
+  .sidebar-menu li {
+    padding: 14px 18px;
+    font-size: 0.9rem;
+  }
+  .close-btn {
+    font-size: 1.8rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .sidebar {
+    width: 70vw;
+    max-width: 350px;
+  }
+  .sidebar-menu li {
+    padding: 15px 20px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Desktop */
 @media (max-width: 600px) {
   .sidebar {
     width: 50vw; max-width: 100vw;

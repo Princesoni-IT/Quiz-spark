@@ -1,5 +1,27 @@
-/* App.css - Yahan hum apni website ko sundar banayenge. */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+/* ==================== MODERN RESPONSIVE UI/UX ==================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: url('images/Homebanner.png') center/cover no-repeat fixed;
+  background-color: #f0f4f8;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
 
 .blue-back-btn {
   background: linear-gradient(45deg, #2193b0, #6dd5ed);
@@ -9,26 +31,18 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 50px;
-  padding: 7px 22px;
+  padding: 12px 28px;
   margin-top: 18px;
   margin-bottom: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(33, 147, 176, 0.3);
   transition: all 0.3s ease;
-  display: block;
+  display: inline-block;
+  min-width: 120px;
 }
 .blue-back-btn:hover {
   background: linear-gradient(45deg, #6dd5ed, #2193b0);
-  transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.13);
-}
-
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f4f8;
-  color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 147, 176, 0.4);
 }
 
 .main-content {
@@ -220,7 +234,84 @@ body {
     background-color: #c0392b;
 }
 
-body {
-  background: url('images/Homebanner.png') center/cover no-repeat fixed;
-  background-color: whitesmoke; /* fallback color */
+/* ==================== RESPONSIVE DESIGN - MOBILE FIRST ==================== */
+
+/* Mobile Devices (320px - 480px) */
+@media (max-width: 480px) {
+  .app-header h1 { font-size: 2rem !important; }
+  .app-header p { font-size: 1rem !important; }
+  
+  .options-container { gap: 20px !important; flex-direction: column !important; }
+  .option-card { width: 100% !important; padding: 25px !important; }
+  .option-card h2 { font-size: 1.5rem !important; }
+  
+  .auth-container { padding: 25px 20px !important; max-width: 95% !important; }
+  .auth-container h2 { font-size: 1.6rem !important; }
+  
+  .btn { padding: 12px 20px !important; font-size: 0.9rem !important; }
+  
+  .quiz-player-container { padding: 20px !important; }
+  .question-text h2 { font-size: 1.3rem !important; min-height: auto !important; }
+  .options-container-player { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .option-btn { padding: 15px !important; font-size: 1rem !important; }
+  
+  .quiz-code-box span { font-size: 2rem !important; letter-spacing: 3px !important; }
+  .countdown-number { font-size: 5rem !important; }
+  .countdown-text { font-size: 1.5rem !important; }
+  
+  .dashboard-container { max-width: 100% !important; }
+  .quiz-list-item { flex-direction: column !important; gap: 15px !important; align-items: flex-start !important; }
+  .quiz-actions { width: 100%; justify-content: space-between; }
+  
+  .create-quiz-container, .add-questions-container { padding-top: 70px !important; max-width: 95% !important; }
+  .options-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Tablets (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .app-header h1 { font-size: 2.5rem !important; }
+  .app-header p { font-size: 1.1rem !important; }
+  
+  .options-container { gap: 25px !important; }
+  .option-card { width: 45% !important; min-width: 280px !important; }
+  
+  .auth-container { max-width: 450px !important; padding: 35px 40px !important; }
+  
+  .quiz-player-container { padding: 30px !important; }
+  .question-text h2 { font-size: 1.5rem !important; }
+  
+  .quiz-code-box span { font-size: 2.5rem !important; }
+  .countdown-number { font-size: 7rem !important; }
+}
+
+/* Small Laptops (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .option-card { width: 280px !important; }
+  .auth-container { max-width: 450px !important; }
+}
+
+/* Touch-Friendly Buttons */
+@media (hover: none) and (pointer: coarse) {
+  .btn, .option-btn, .back-btn, .blue-back-btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  .quiz-actions button {
+    padding: 10px 18px !important;
+    font-size: 0.95rem !important;
+  }
+}
+
+/* Landscape Mode for Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .container { min-height: auto; padding: 10px; }
+  .app-header { margin-bottom: 20px; }
+  .countdown-number { font-size: 4rem !important; }
+}
+
+/* Print Styles */
+@media print {
+  .navbar, .sidebar, .back-btn, .btn { display: none !important; }
+  body { background: white !important; }
 }
