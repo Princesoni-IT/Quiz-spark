@@ -144,20 +144,93 @@ app.post('/api/register', async (req, res) => {
             }
         });
         const mailOptions = {
-            from: process.env.GMAIL_USER,
+            from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
             to: email,
-            subject: 'Your QuizSpark OTP',
-text: `Hello,
-Thank you for registering on quiz Spark!
-Your OTP for registration is: 
-        ${otp}
-⚠️This OTP is valid for 10 minutes. 
-Please do not share it with anyone.
-
-If you did not request this, please ignore this email.
-
-Regards,
-Team Quiz Spark✨`,
+            subject: '🔐 Your Quiz Spark Verification Code',
+            html: `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: #ffffff; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .content { padding: 40px 30px; }
+        .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
+        .otp-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .otp-label { color: #ffffff; font-size: 14px; margin-bottom: 10px; letter-spacing: 1px; }
+        .otp-code { font-size: 48px; font-weight: bold; color: #ffffff; letter-spacing: 8px; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .info-box { background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .info-box p { margin: 5px 0; color: #1976d2; font-size: 14px; }
+        .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .warning p { margin: 5px 0; color: #856404; font-size: 14px; }
+        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; }
+        .footer p { color: #666; font-size: 14px; margin: 5px 0; }
+        .social-links { margin: 20px 0; }
+        .social-links a { color: #667eea; text-decoration: none; margin: 0 10px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Quiz Spark ✨</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Welcome to the Ultimate Quiz Platform</p>
+        </div>
+        
+        <div class="content">
+            <p class="greeting">Hello <strong>${fullName}</strong>,</p>
+            <p style="color: #555; line-height: 1.6;">
+                Thank you for registering with <strong>Quiz Spark</strong>! We're excited to have you join our community of quiz enthusiasts.
+            </p>
+            
+            <p style="color: #555; line-height: 1.6; margin-top: 20px;">
+                To complete your registration, please use the verification code below:
+            </p>
+            
+            <div class="otp-box">
+                <p class="otp-label">YOUR VERIFICATION CODE</p>
+                <div class="otp-code">${otp}</div>
+                <p style="color: #ffffff; font-size: 12px; margin-top: 15px;">Valid for 10 minutes</p>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>📌 How to use:</strong></p>
+                <p>1. Return to the Quiz Spark registration page</p>
+                <p>2. Enter this 6-digit code in the OTP field</p>
+                <p>3. Click "Verify" to activate your account</p>
+            </div>
+            
+            <div class="warning">
+                <p><strong>⚠️ Security Notice:</strong></p>
+                <p>• Never share this code with anyone</p>
+                <p>• Quiz Spark team will never ask for your OTP</p>
+                <p>• This code expires in 10 minutes</p>
+            </div>
+            
+            <p style="color: #555; line-height: 1.6; margin-top: 30px;">
+                If you didn't request this code, please ignore this email or contact our support team.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p style="font-weight: 600; color: #333;">Quiz Spark Team ✨</p>
+            <p>Your Ultimate Quiz Platform</p>
+            <div class="social-links">
+                <a href="#">Website</a> | 
+                <a href="#">Support</a> | 
+                <a href="#">Privacy Policy</a>
+            </div>
+            <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                © 2025 Quiz Spark. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+            `,
         };
         await transporter.sendMail(mailOptions);
 
@@ -559,24 +632,85 @@ app.post('/api/forgot-password', async (req, res) => {
             });
 
             const mailOptions = {
-                from: process.env.GMAIL_USER,
+                from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
                 to: email,
-                subject: 'Quiz Spark - Password Reset OTP',
+                subject: '🔑 Reset Your Quiz Spark Password',
                 html: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px;">
-                            <h2 style="color: #5a67d8;">🔑 Password Reset Request</h2>
-                            <p>Hello ${user.fullName},</p>
-                            <p>You requested to reset your password. Use the OTP below to proceed:</p>
-                            <div style="background-color: #f0f4f8; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                                <h1 style="color: #5a67d8; margin: 0; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
-                            </div>
-                            <p>This OTP is valid for 10 minutes.</p>
-                            <p>If you didn't request this, please ignore this email.</p>
-                            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-                            <p style="color: #999; font-size: 12px;">Quiz Spark - Team Spark</p>
-                        </div>
-                    </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 40px 20px; text-align: center; }
+        .header h1 { color: #ffffff; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .content { padding: 40px 30px; }
+        .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
+        .otp-box { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3); }
+        .otp-label { color: #ffffff; font-size: 14px; margin-bottom: 10px; letter-spacing: 1px; }
+        .otp-code { font-size: 48px; font-weight: bold; color: #ffffff; letter-spacing: 8px; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .info-box { background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .info-box p { margin: 5px 0; color: #e65100; font-size: 14px; }
+        .warning { background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .warning p { margin: 5px 0; color: #c62828; font-size: 14px; }
+        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; }
+        .footer p { color: #666; font-size: 14px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 Password Reset</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Quiz Spark Security</p>
+        </div>
+        
+        <div class="content">
+            <p class="greeting">Hello <strong>${user.fullName}</strong>,</p>
+            <p style="color: #555; line-height: 1.6;">
+                We received a request to reset your <strong>Quiz Spark</strong> account password.
+            </p>
+            
+            <p style="color: #555; line-height: 1.6; margin-top: 20px;">
+                Use the verification code below to reset your password:
+            </p>
+            
+            <div class="otp-box">
+                <p class="otp-label">PASSWORD RESET CODE</p>
+                <div class="otp-code">${otp}</div>
+                <p style="color: #ffffff; font-size: 12px; margin-top: 15px;">Valid for 10 minutes</p>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>📌 Next Steps:</strong></p>
+                <p>1. Return to the Quiz Spark password reset page</p>
+                <p>2. Enter this 6-digit code</p>
+                <p>3. Create your new password</p>
+            </div>
+            
+            <div class="warning">
+                <p><strong>⚠️ Security Alert:</strong></p>
+                <p>• If you didn't request this reset, please ignore this email</p>
+                <p>• Your password will remain unchanged</p>
+                <p>• Consider changing your password if you suspect unauthorized access</p>
+            </div>
+            
+            <p style="color: #555; line-height: 1.6; margin-top: 30px;">
+                For security reasons, this code will expire in 10 minutes.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p style="font-weight: 600; color: #333;">Quiz Spark Team ✨</p>
+            <p>Your Ultimate Quiz Platform</p>
+            <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                © 2025 Quiz Spark. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
                 `
             };
 
