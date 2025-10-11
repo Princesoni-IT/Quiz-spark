@@ -251,7 +251,12 @@ app.post('/api/register', async (req, res) => {
 
         res.status(201).json({ message: "OTP sent to your email!" });
     } catch (error) {
-        res.status(500).json({ message: "Server error during registration.", error });
+        console.error("Registration error:", error);
+        console.error("Error details:", error.message);
+        res.status(500).json({ 
+            message: "Server error during registration.", 
+            error: error.message 
+        });
     }
 });
 
@@ -272,6 +277,46 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
+
+// Test email configuration
+app.get('/api/test-email', async (req, res) => {
+    try {
+        console.log('Testing email configuration...');
+        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
+        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
+        
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+            return res.status(500).json({ 
+                message: "Email not configured",
+                gmailUser: !!process.env.GMAIL_USER,
+                gmailPass: !!process.env.GMAIL_PASS
+            });
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.GMAIL_USER,
+                pass: process.env.GMAIL_PASS
+            }
+        });
+
+        await transporter.sendMail({
+            from: `"Quiz Spark Test ✨" <${process.env.GMAIL_USER}>`,
+            to: process.env.GMAIL_USER,
+            subject: 'Test Email - Quiz Spark',
+            text: 'If you receive this, email configuration is working!'
+        });
+
+        res.status(200).json({ message: "Test email sent successfully! Check your inbox." });
+    } catch (error) {
+        console.error('Email test error:', error);
+        res.status(500).json({ 
+            message: "Email test failed", 
+            error: error.message 
+        });
+    }
+});
 
 app.post('/api/login', async (req, res) => {
     try {
