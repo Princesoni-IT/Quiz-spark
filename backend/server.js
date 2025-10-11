@@ -20,7 +20,7 @@ const io = new Server(server, {
         origin: [
             "http://localhost:5173",
             "https://quiz-spark.netlify.app",
-            "https://quiz-spark-xxxx.netlify.app"  // Replace xxxx with your actual Netlify URL
+            /\.netlify\.app$/  // Allow all Netlify subdomains
         ], 
         methods: ["GET", "POST", "PUT", "DELETE"] 
     }
