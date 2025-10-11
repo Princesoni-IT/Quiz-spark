@@ -146,23 +146,28 @@ app.post('/api/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log('🔐 OTP Generated for', email, ':', otp); // Debug log
+        
         // Save user with OTP, not verified yet
         const newUser = new User({ fullName, email, password: hashedPassword, otp, otpVerified: false });
         await newUser.save();
+        console.log('✅ User saved to database');
 
         // Send OTP via Gmail SMTP
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_PASS
-            }
-        });
-        const mailOptions = {
-            from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: '🔐 Your Quiz Spark Verification Code',
-            html: `
+        console.log('📧 Attempting to send email...');
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.GMAIL_USER,
+                    pass: process.env.GMAIL_PASS
+                }
+            });
+            const mailOptions = {
+                from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
+                to: email,
+                subject: '🔐 Your Quiz Spark Verification Code',
+                html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -246,10 +251,20 @@ app.post('/api/register', async (req, res) => {
 </body>
 </html>
             `,
-        };
-        await transporter.sendMail(mailOptions);
-
-        res.status(201).json({ message: "OTP sent to your email!" });
+            };
+            await transporter.sendMail(mailOptions);
+            console.log('Email sent successfully to:', email);
+            
+            res.status(201).json({ message: "OTP sent to your email!" });
+        } catch (emailError) {
+            console.error("Email sending failed:", emailError.message);
+            // If email fails, delete the user and return error
+            await User.deleteOne({ email });
+            return res.status(500).json({ 
+                message: "Failed to send OTP email. Please check your email or try again.", 
+                error: emailError.message 
+            });
+        }
     } catch (error) {
         console.error("Registration error:", error);
         console.error("Error details:", error.message);
@@ -277,6 +292,26 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
+
+// Quick cleanup: Delete user by email (for testing)
+app.delete('/api/cleanup-user/:email', async (req, res) => {
+    try {
+        const email = req.params.email;
+        const deletedUser = await User.findOneAndDelete({ email });
+        
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found with this email." });
+        }
+        
+        res.status(200).json({ 
+            message: "User deleted successfully!", 
+            email: email 
+        });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ message: "Server error while deleting user." });
+    }
+});
 
 // Test email configuration
 app.get('/api/test-email', async (req, res) => {
