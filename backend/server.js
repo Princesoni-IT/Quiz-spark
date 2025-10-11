@@ -85,8 +85,14 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     otp: { type: String },
     otpVerified: { type: Boolean, default: false },
-    profilePicture: { type: String, default: '' } // URL or base64 string
+    profilePicture: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now }
 });
+
+// Add indexes for better query performance
+userSchema.index({ email: 1 });
+userSchema.index({ createdAt: -1 });
+
 const User = mongoose.model('User', userSchema);
 
 const feedbackSchema = new mongoose.Schema({
