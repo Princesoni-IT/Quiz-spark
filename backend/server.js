@@ -1185,6 +1185,22 @@ function sendNextQuestionToPlayer(roomCode, player) {
     });
 }
 
+// Keep-alive endpoint to prevent Render from sleeping
+app.get('/api/keep-alive', (req, res) => {
+    res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
+});
+
+// Self-ping every 10 minutes to keep server awake (only in production)
+if (process.env.NODE_ENV === 'production') {
+    const SELF_PING_INTERVAL = 10 * 60 * 1000; // 10 minutes
+    setInterval(() => {
+        const url = process.env.RENDER_EXTERNAL_URL || 'https://quiz-spark.onrender.com';
+        fetch(`${url}/api/keep-alive`)
+            .then(() => console.log('✅ Keep-alive ping successful'))
+            .catch(err => console.log('❌ Keep-alive ping failed:', err.message));
+    }, SELF_PING_INTERVAL);
+}
+
 // --- Server Start ---
 connectDB().then(() => {
     server.listen(PORT, () => console.log(`Server with real-time features is running on port ${PORT}.`));

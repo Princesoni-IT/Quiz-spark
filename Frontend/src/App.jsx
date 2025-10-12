@@ -22,6 +22,9 @@ import ForgotPassword from './ForgotPassword.jsx';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
 
+// Configure axios defaults for better handling of cold starts
+axios.defaults.timeout = 60000; // 60 seconds timeout for cold starts
+
 const socket = io(import.meta.env.VITE_API_URL);
 
 function App() {
