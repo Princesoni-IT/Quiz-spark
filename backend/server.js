@@ -168,9 +168,14 @@ app.post('/api/register', async (req, res) => {
         console.log('📧 Attempting to send email...');
         console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
         console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (length: ' + (process.env.GMAIL_PASS?.length || 0) + ')' : 'NOT SET');
+        console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN ? 'SET' : 'NOT SET');
+        console.log('BREVO_SMTP_KEY:', process.env.BREVO_SMTP_KEY ? 'SET' : 'NOT SET');
         
-        // Check if email credentials are configured
-        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+        // Check if email credentials are configured (Brevo or Gmail)
+        const hasEmailConfig = (process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN) || 
+                               (process.env.GMAIL_USER && process.env.GMAIL_PASS);
+        
+        if (!hasEmailConfig) {
             console.warn('⚠️ Email credentials not configured! OTP:', otp);
             return res.status(201).json({ 
                 message: "OTP generated! (Email not configured - Check server logs for OTP)",
@@ -765,10 +770,15 @@ app.post('/api/forgot-password', async (req, res) => {
         console.log('OTP:', otp);
         console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
         console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
+        console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN ? 'SET' : 'NOT SET');
+        console.log('BREVO_SMTP_KEY:', process.env.BREVO_SMTP_KEY ? 'SET' : 'NOT SET');
         console.log('========================');
 
-        // Check if email is configured
-        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+        // Check if email is configured (Brevo or Gmail)
+        const hasEmailConfig = (process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN) || 
+                               (process.env.GMAIL_USER && process.env.GMAIL_PASS);
+        
+        if (!hasEmailConfig) {
             console.warn('⚠️ Email not configured! OTP printed in console above.');
             return res.status(200).json({ 
                 message: "OTP generated successfully! (Check server console for OTP - Email not configured)" 
