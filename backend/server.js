@@ -166,6 +166,18 @@ app.post('/api/register', async (req, res) => {
 
         // Send OTP via Gmail SMTP
         console.log('📧 Attempting to send email...');
+        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
+        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (length: ' + (process.env.GMAIL_PASS?.length || 0) + ')' : 'NOT SET');
+        
+        // Check if email credentials are configured
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+            console.warn('⚠️ Email credentials not configured! OTP:', otp);
+            return res.status(201).json({ 
+                message: "OTP generated! (Email not configured - Check server logs for OTP)",
+                otp: otp // Temporary: Send OTP in response for testing
+            });
+        }
+        
         try {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
