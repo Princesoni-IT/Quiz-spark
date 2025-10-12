@@ -99,7 +99,8 @@ function App() {
         localStorage.setItem('token', response.data.token);
         const decodedUser = jwtDecode(response.data.token);
         localStorage.setItem('userId', decodedUser.userId); // userId bhi save karo
-        setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName }); 
+        // Fetch full user profile to get email
+        await fetchCurrentUser(response.data.token);
         setCurrentPage('home');
       }
     } catch (error) {

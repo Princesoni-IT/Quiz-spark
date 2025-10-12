@@ -13,6 +13,8 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
     const [scores, setScores] = useState([]);
     const [isFinished, setIsFinished] = useState(false);
     const [playerFinished, setPlayerFinished] = useState(false);
+    const [totalPlayers, setTotalPlayers] = useState(0);
+    const [finishedPlayers, setFinishedPlayers] = useState(0);
     const isAdmin = user.id === quiz.creatorId;
 
     // Tab locking (sirf student ke liye)
@@ -67,9 +69,17 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
         
         // Admin ke liye live leaderboard
         socket.on('update_leaderboard', (liveScores) => {
+            // Filter out admin from the scores
+            const studentsOnly = liveScores.filter(p => p.id !== quiz.creatorId);
+            
             // Scores ko sort karke update karo
-            const sortedScores = [...liveScores].sort((a, b) => b.score - a.score);
+            const sortedScores = [...studentsOnly].sort((a, b) => b.score - a.score);
             setScores(sortedScores);
+            
+            // Count total and finished players (excluding admin)
+            setTotalPlayers(studentsOnly.length);
+            const finished = studentsOnly.filter(p => p.currentQuestionIndex >= quiz.questions.length).length;
+            setFinishedPlayers(finished);
         });
 
         const interval = setInterval(() => {
@@ -125,7 +135,83 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
     if (isAdmin) {
         return (
             <div className="quiz-player-container">
-                <h2>Live Leaderboard</h2>
+                <h2 style={{ marginBottom: '10px' }}>📊 Live Quiz Monitor</h2>
+                <p style={{ fontSize: '1rem', color: '#666', marginBottom: '20px' }}>Track student progress in real-time</p>
+                
+                {/* Admin Progress Indicator */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '25px',
+                    borderRadius: '12px',
+                    marginBottom: '30px',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+                }}>
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+                        gap: '20px',
+                        marginBottom: '20px'
+                    }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', marginBottom: '5px' }}>
+                                Total Students
+                            </div>
+                            <div style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>
+                                {totalPlayers}
+                            </div>
+                        </div>
+                        
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', marginBottom: '5px' }}>
+                                Completed
+                            </div>
+                            <div style={{ color: '#38ef7d', fontSize: '2.5rem', fontWeight: '700' }}>
+                                {finishedPlayers}
+                            </div>
+                        </div>
+                        
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', marginBottom: '5px' }}>
+                                In Progress
+                            </div>
+                            <div style={{ color: '#feb47b', fontSize: '2.5rem', fontWeight: '700' }}>
+                                {totalPlayers - finishedPlayers}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div style={{
+                        width: '100%',
+                        height: '12px',
+                        background: 'rgba(255,255,255,0.3)',
+                        borderRadius: '6px',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            width: `${totalPlayers > 0 ? (finishedPlayers / totalPlayers) * 100 : 0}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #38ef7d, #11998e)',
+                            transition: 'width 0.5s ease',
+                            borderRadius: '6px'
+                        }}></div>
+                    </div>
+                    
+                    <div style={{ 
+                        color: 'white', 
+                        fontSize: '1rem', 
+                        marginTop: '10px',
+                        textAlign: 'center',
+                        fontWeight: '600'
+                    }}>
+                        {finishedPlayers === totalPlayers && totalPlayers > 0 
+                            ? '✅ All students have completed the quiz!' 
+                            : `${totalPlayers > 0 ? Math.round((finishedPlayers / totalPlayers) * 100) : 0}% Complete`
+                        }
+                    </div>
+                </div>
+                
+                <h3 style={{ marginBottom: '15px', color: '#1e2a78' }}>Current Rankings</h3>
                 <Leaderboard scores={scores} onBack={onBack} />
             </div>
         );
@@ -136,7 +222,45 @@ function QuizPlayer({ socket, quiz, user, onBack }) { // onBack naya prop
         return (
             <div className="quiz-player-container">
                 <h2>🎉 You've completed all questions!</h2>
-                <p>Waiting for other students to finish...</p>
+                <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '10px' }}>Waiting for other students to finish...</p>
+                
+                {/* Player Progress Indicator */}
+                <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    marginBottom: '30px',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+                }}>
+                    <div style={{ color: 'white', fontSize: '1.3rem', fontWeight: '600', marginBottom: '10px' }}>
+                        📊 Quiz Progress
+                    </div>
+                    <div style={{ color: 'white', fontSize: '2.5rem', fontWeight: '700' }}>
+                        {finishedPlayers} / {totalPlayers}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1rem', marginTop: '5px' }}>
+                        Players Completed
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div style={{
+                        width: '100%',
+                        height: '10px',
+                        background: 'rgba(255,255,255,0.3)',
+                        borderRadius: '5px',
+                        marginTop: '15px',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            width: `${totalPlayers > 0 ? (finishedPlayers / totalPlayers) * 100 : 0}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #38ef7d, #11998e)',
+                            transition: 'width 0.5s ease',
+                            borderRadius: '5px'
+                        }}></div>
+                    </div>
+                </div>
+                
                 <Leaderboard scores={scores} onBack={onBack} />
             </div>
         );

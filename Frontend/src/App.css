@@ -48,6 +48,11 @@ html {
 .main-content {
   padding: 20px;
   padding-top: 80px; /* <-- Ye line add karein */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
 }
 
 .container {
@@ -93,6 +98,7 @@ html {
   min-height: 90vh;
   position: relative;
   padding-top: 90px;
+  margin: 0 auto;
 }
 .back-btn {
   background: linear-gradient(45deg, #ff7e5f, #feb47b);
@@ -158,8 +164,9 @@ html {
 .app-footer { margin-top: 50px; color: #aaa; font-size: 0.9rem; }
 
 /* ================== DASHBOARD STYLES ================== */
-.dashboard-container { width: 100%; max-width: 800px; }
+.dashboard-container { width: 100%; max-width: 800px; margin: 0 auto; }
 .dashboard-actions { width: 100%; text-align: right; margin-bottom: 20px; }
+.dashboard-button-row { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
 .quiz-list-container { width: 100%; background-color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
 .quiz-list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
 .quiz-list-item:last-child { border-bottom: none; }
@@ -177,7 +184,7 @@ html {
 .question-actions button { margin-left: 10px; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
 .question-actions button:first-of-type { background-color: #3498db; color: white; }
 .question-actions button:last-of-type { background-color: #e74c3c; color: white; }
-.quiz-player-container { width: 100%; max-width: 800px; background-color: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+.quiz-player-container { width: 100%; max-width: 800px; background-color: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; margin-top: 80px; margin-bottom: 40px; }
 .quiz-player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .timer { font-size: 1.5rem; font-weight: 700; color: #e74c3c; }
 .question-text h2 { font-size: 1.8rem; min-height: 100px; }
@@ -186,12 +193,14 @@ html {
 .option-btn:hover { background-color: #e2e8f0; border-color: #5a67d8; }
 .option-btn.selected { background-color: #5a67d8; color: white; border-color: #5a67d8; }
 .submit-answer-btn { width: 100%; }
+.player-progress-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+.admin-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-bottom: 20px; }
 
 /* ================== FINAL NEW STYLES ================== */
 .countdown-container { text-align: center; }
 .countdown-number { font-size: 10rem; font-weight: 700; color: #5a67d8; animation: pulse 1s infinite; }
 .countdown-text { font-size: 2.5rem; color: #1e2a78; }
-.leaderboard-container { width: 100%; max-width: 600px; }
+.leaderboard-container { width: 100%; max-width: 600px; margin: 20px auto 0; text-align: center; }
 .leaderboard-list { margin-top: 20px; }
 .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .leaderboard-item .rank { font-weight: 700; font-size: 1.2rem; color: #5a67d8; }
@@ -250,16 +259,20 @@ html {
   
   .btn { padding: 12px 20px !important; font-size: 0.9rem !important; }
   
-  .quiz-player-container { padding: 20px !important; }
+  .quiz-player-container { padding: 20px !important; margin-top: 70px !important; }
   .question-text h2 { font-size: 1.3rem !important; min-height: auto !important; }
   .options-container-player { grid-template-columns: 1fr !important; gap: 10px !important; }
   .option-btn { padding: 15px !important; font-size: 1rem !important; }
+  .player-progress-card { padding: 15px !important; }
+  .admin-stats-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
   
   .quiz-code-box span { font-size: 2rem !important; letter-spacing: 3px !important; }
   .countdown-number { font-size: 5rem !important; }
   .countdown-text { font-size: 1.5rem !important; }
   
   .dashboard-container { max-width: 100% !important; }
+  .dashboard-button-row { flex-direction: column !important; gap: 10px !important; }
+  .dashboard-button-row button { width: 100% !important; }
   .quiz-list-item { flex-direction: column !important; gap: 15px !important; align-items: flex-start !important; }
   .quiz-actions { width: 100%; justify-content: space-between; }
   

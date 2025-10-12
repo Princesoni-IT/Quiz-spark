@@ -15,18 +15,24 @@ function Leaderboard({ scores, onBack }) {
 
   return (
     <div className="leaderboard-container">
-      <header className="app-header">
+      <header className="app-header" style={{ textAlign: 'center' }}>
         <h1>Final Leaderboard</h1>
         <p>Congratulations to the winners!</p>
       </header>
       <div className="leaderboard-list">
-        {sortedScores.map((player, index) => (
-          <div key={player.id} className={`leaderboard-item ${getRankClass(index)}`}>
-            <span className="rank">#{index + 1}</span>
-            <span className="name">{player.fullName}</span>
-            <span className="score">{player.score} pts</span>
-          </div>
-        ))}
+        {sortedScores.length > 0 ? (
+          sortedScores.map((player, index) => (
+            <div key={player.id} className={`leaderboard-item ${getRankClass(index)}`}>
+              <span className="rank">#{index + 1}</span>
+              <span className="name">{player.fullName}</span>
+              <span className="score">{player.score} pts</span>
+            </div>
+          ))
+        ) : (
+          <p style={{ color: '#666', fontSize: '1rem', marginTop: '20px' }}>
+            No players yet. Waiting for students to join...
+          </p>
+        )}
       </div>
       {onBack && (
         <button

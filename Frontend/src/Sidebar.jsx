@@ -7,7 +7,8 @@ function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
 
   useEffect(() => {
     checkIfAdmin();
-  }, []);
+    console.log('Sidebar user data:', user); // Debug log
+  }, [user]);
 
   const checkIfAdmin = async () => {
     try {
@@ -40,6 +41,15 @@ function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
           <h3>Profile Options</h3>
           <button onClick={onClose} className="close-btn">&times;</button>
         </div>
+        
+        {/* User Email Display */}
+        {user && user.email && (
+          <div className="user-email-section">
+            <span className="email-label">📧</span>
+            <span className="user-email">{user.email}</span>
+          </div>
+        )}
+        
         <ul className="sidebar-menu" style={{maxHeight: 'auto', overflowY: 'auto'}}>
           <li onClick={() => handleOptionClick('changeUsername')}>✏️ Change Username</li>
           <li onClick={() => handleOptionClick('changePassword')}>🔒 Change Password</li>

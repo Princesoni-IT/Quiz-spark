@@ -126,7 +126,7 @@ function ForgotPassword({ onBack, onLoginRedirect }) {
               onChange={(e) => setOtp(e.target.value)}
               maxLength={6}
               required
-            />
+            /> 
             <button 
               type="submit" 
               className="btn create-btn" 
