@@ -61,7 +61,7 @@ function AdminFeedback({ onBack }) {
   };
 
   return (
-    <div className="auth-container" style={{ maxWidth: '900px', margin: '50px auto' }}>
+    <div className="auth-container" style={{ maxWidth: '900px', margin: '50px auto', marginTop: '100px' }}>
       <h2>💬 User Feedbacks</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
         All user feedback submissions
