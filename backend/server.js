@@ -377,23 +377,39 @@ app.post('/api/login', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Server error during login." }); }
 });
 
+// New Fixed Code for creating a quiz
 app.post('/api/quizzes/create', authMiddleware, async (req, res) => {
     try {
         const { title, description, numQuestions, timePerQuestion, pointsPerQuestion } = req.body;
         const creatorId = req.user.userId;
-        const quizCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        let quizCode;
+        let isUnique = false;
+
+        // Jab tak unique code na mil jaaye, naya code banate raho
+        while (!isUnique) {
+            quizCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const existingQuiz = await Quiz.findOne({ quizCode });
+            if (!existingQuiz) {
+                isUnique = true;
+            }
+        }
+
         const newQuiz = new Quiz({
             title, description, creatorId, quizCode,
             settings: { numQuestions, timePerQuestion, pointsPerQuestion }
         });
+
         await newQuiz.save();
         res.status(201).json({ message: "Quiz created successfully!", quiz: newQuiz });
     } catch (error) {
         console.error("Error creating quiz:", error);
+        if (error.code === 11000) { // Handle rare race condition
+             return res.status(500).json({ message: "Could not generate a unique quiz code, please try again." });
+        }
         res.status(500).json({ message: "Server error while creating quiz." });
     }
 });
-
 app.get('/api/quizzes', authMiddleware, async (req, res) => {
     try {
         const quizzes = await Quiz.find({ creatorId: req.user.userId });
