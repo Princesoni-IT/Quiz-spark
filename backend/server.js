@@ -184,19 +184,11 @@ app.post('/api/register', async (req, res) => {
         }
         
         try {
-            // Use Brevo (Sendinblue) if configured, otherwise Gmail
-            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
-            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL');
+            // Use Gmail (priority) or Brevo as fallback
+            const useGmail = process.env.GMAIL_USER && process.env.GMAIL_PASS;
+            console.log('📧 Using email service:', useGmail ? 'GMAIL ✅' : 'BREVO');
             
-            const transporter = nodemailer.createTransport(useBrevo ? {
-                host: 'smtp-relay.brevo.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.BREVO_SMTP_LOGIN,
-                    pass: process.env.BREVO_SMTP_KEY
-                }
-            } : {
+            const transporter = nodemailer.createTransport(useGmail ? {
                 service: 'gmail',
                 host: 'smtp.gmail.com',
                 port: 587,
@@ -208,9 +200,17 @@ app.post('/api/register', async (req, res) => {
                 tls: {
                     rejectUnauthorized: false
                 }
+            } : {
+                host: 'smtp-relay.brevo.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.BREVO_SMTP_LOGIN,
+                    pass: process.env.BREVO_SMTP_KEY
+                }
             });
             
-            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
+            const senderEmail = useGmail ? process.env.GMAIL_USER : process.env.BREVO_SMTP_LOGIN;
             const mailOptions = {
                 from: `"Quiz Spark ✨" <${senderEmail}>`,
                 to: email,
@@ -797,19 +797,11 @@ app.post('/api/forgot-password', async (req, res) => {
         }
 
         try {
-            // Use Brevo (Sendinblue) if configured, otherwise Gmail
-            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
-            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL');
+            // Use Gmail (priority) or Brevo as fallback
+            const useGmail = process.env.GMAIL_USER && process.env.GMAIL_PASS;
+            console.log('📧 Using email service:', useGmail ? 'GMAIL ✅' : 'BREVO');
             
-            const transporter = nodemailer.createTransport(useBrevo ? {
-                host: 'smtp-relay.brevo.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.BREVO_SMTP_LOGIN,
-                    pass: process.env.BREVO_SMTP_KEY
-                }
-            } : {
+            const transporter = nodemailer.createTransport(useGmail ? {
                 service: 'gmail',
                 host: 'smtp.gmail.com',
                 port: 587,
@@ -821,9 +813,17 @@ app.post('/api/forgot-password', async (req, res) => {
                 tls: {
                     rejectUnauthorized: false
                 }
+            } : {
+                host: 'smtp-relay.brevo.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.BREVO_SMTP_LOGIN,
+                    pass: process.env.BREVO_SMTP_KEY
+                }
             });
 
-            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
+            const senderEmail = useGmail ? process.env.GMAIL_USER : process.env.BREVO_SMTP_LOGIN;
             const mailOptions = {
                 from: `"Quiz Spark ✨" <${senderEmail}>`,
                 to: email,
