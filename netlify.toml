@@ -1,0 +1,12 @@
+[build]
+  base = "Frontend"
+  command = "npm run build"
+  publish = "Frontend/dist"
+
+[build.environment]
+  VITE_API_URL = "https://quiz-spark.onrender.com"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
