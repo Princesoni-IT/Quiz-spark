@@ -167,23 +167,8 @@ app.post('/api/register', async (req, res) => {
         // Send OTP via Gmail SMTP
         console.log('📧 Attempting to send email...');
         try {
-
-
-             // --- YEH DO LINES ADD KAREIN ---
-    console.log('DEBUG: GMAIL_USER being used:', process.env.GMAIL_USER);
-    console.log('DEBUG: GMAIL_PASS being used:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
-    // --- END ---
-
-
-
             const transporter = nodemailer.createTransport({
-                
-
-                    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true for 465, false for other ports
-
-
+                service: 'gmail',
                 auth: {
                     user: process.env.GMAIL_USER,
                     pass: process.env.GMAIL_PASS
