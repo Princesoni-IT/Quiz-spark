@@ -186,6 +186,7 @@ app.post('/api/register', async (req, res) => {
         try {
             // Use Brevo (Sendinblue) if configured, otherwise Gmail
             const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
+            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL');
             
             const transporter = nodemailer.createTransport(useBrevo ? {
                 host: 'smtp-relay.brevo.com',
@@ -788,6 +789,7 @@ app.post('/api/forgot-password', async (req, res) => {
         try {
             // Use Brevo (Sendinblue) if configured, otherwise Gmail
             const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
+            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL');
             
             const transporter = nodemailer.createTransport(useBrevo ? {
                 host: 'smtp-relay.brevo.com',
