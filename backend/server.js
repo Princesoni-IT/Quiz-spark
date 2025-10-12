@@ -179,11 +179,22 @@ app.post('/api/register', async (req, res) => {
         }
         
         try {
-            const transporter = nodemailer.createTransport({
+            // Use Brevo (Sendinblue) if configured, otherwise Gmail
+            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
+            
+            const transporter = nodemailer.createTransport(useBrevo ? {
+                host: 'smtp-relay.brevo.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.BREVO_SMTP_LOGIN,
+                    pass: process.env.BREVO_SMTP_KEY
+                }
+            } : {
                 service: 'gmail',
                 host: 'smtp.gmail.com',
                 port: 587,
-                secure: false, // Use TLS
+                secure: false,
                 auth: {
                     user: process.env.GMAIL_USER,
                     pass: process.env.GMAIL_PASS
@@ -192,8 +203,10 @@ app.post('/api/register', async (req, res) => {
                     rejectUnauthorized: false
                 }
             });
+            
+            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
             const mailOptions = {
-                from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
+                from: `"Quiz Spark ✨" <${senderEmail}>`,
                 to: email,
                 subject: '🔐 Your Quiz Spark Verification Code',
                 html: `
@@ -763,11 +776,22 @@ app.post('/api/forgot-password', async (req, res) => {
         }
 
         try {
-            const transporter = nodemailer.createTransport({
+            // Use Brevo (Sendinblue) if configured, otherwise Gmail
+            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
+            
+            const transporter = nodemailer.createTransport(useBrevo ? {
+                host: 'smtp-relay.brevo.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.BREVO_SMTP_LOGIN,
+                    pass: process.env.BREVO_SMTP_KEY
+                }
+            } : {
                 service: 'gmail',
                 host: 'smtp.gmail.com',
                 port: 587,
-                secure: false, // Use TLS
+                secure: false,
                 auth: {
                     user: process.env.GMAIL_USER,
                     pass: process.env.GMAIL_PASS
@@ -777,8 +801,9 @@ app.post('/api/forgot-password', async (req, res) => {
                 }
             });
 
+            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
             const mailOptions = {
-                from: `"Quiz Spark ✨" <${process.env.GMAIL_USER}>`,
+                from: `"Quiz Spark ✨" <${senderEmail}>`,
                 to: email,
                 subject: '🔑 Reset Your Quiz Spark Password',
                 html: `
