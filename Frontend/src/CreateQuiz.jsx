@@ -26,7 +26,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
     console.log("Sending these settings to backend:", quizSettings);
 
     try {
-      const response = await axios.post('https://quiz-spark.onrender.com/api/quizzes/create', quizSettings, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/quizzes/create`, quizSettings, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -44,7 +44,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
       <div className="auth-container">
         <h2>Create Your Quiz</h2>
         <p>Fill in the details to start a new quiz room.</p>
-        <p>Fill correct because you don't change quiz setting after you only change questions</p>
+        <p>Fill in the details correctly. You cannot change quiz settings after creation, only questions can be modified.</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <input type="text" placeholder="Quiz Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <textarea placeholder="Quiz Description..." value={description} onChange={(e) => setDescription(e.target.value)} required rows="3"></textarea>
@@ -63,4 +63,3 @@ function CreateQuiz({ onBack, onQuizCreated }) {
 }
 
 export default CreateQuiz;
-
