@@ -26,7 +26,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
     console.log("Sending these settings to backend:", quizSettings);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/quizzes/create', quizSettings, {
+      const response = await axios.post('https://quiz-spark.onrender.com/api/quizzes/create', quizSettings, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
