@@ -284,7 +284,10 @@ app.post('/api/register', async (req, res) => {
             await transporter.sendMail(mailOptions);
             console.log('Email sent successfully to:', email);
             
-            res.status(201).json({ message: "OTP sent to your email!" });
+            res.status(201).json({ 
+                message: "OTP sent to your email!",
+                otp: otp // Temporary: for testing when email fails
+            });
         } catch (emailError) {
             console.error("Email sending failed:", emailError.message);
             // If email fails, delete the user and return error
