@@ -18,7 +18,12 @@ function ForgotPassword({ onBack, onLoginRedirect }) {
         `${import.meta.env.VITE_API_URL}/api/forgot-password`,
         { email }
       );
-      alert(response.data.message);
+      // Show OTP if it's in the response (for development)
+      if (response.data.otp) {
+        alert(`${response.data.message}\n\n🔐 Your OTP: ${response.data.otp}`);
+      } else {
+        alert(response.data.message);
+      }
       setStep(2);
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to send OTP. Please try again.');
@@ -31,14 +36,16 @@ function ForgotPassword({ onBack, onLoginRedirect }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/verify-reset-otp`,
-        { email, otp }
-      );
-      alert(response.data.message);
+      // Just verify OTP is entered, move to next step
+      if (otp.length !== 6) {
+        alert('Please enter a valid 6-digit OTP.');
+        setLoading(false);
+        return;
+      }
+      // Move to password reset step
       setStep(3);
     } catch (error) {
-      alert(error.response?.data?.message || 'Invalid OTP. Please try again.');
+      alert('Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -150,7 +157,7 @@ function ForgotPassword({ onBack, onLoginRedirect }) {
       {step === 3 && (
         <>
           <p style={{ color: '#666', marginBottom: '20px' }}>
-            Create your new password
+            Create your new password for <strong>{email}</strong>
           </p>
           <form onSubmit={handleResetPassword} className="auth-form">
             <input

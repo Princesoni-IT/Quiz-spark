@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const multer = require('multer');
 const xlsx = require('xlsx');
 const fs = require('fs');
@@ -103,8 +102,6 @@ const userSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true }, // unique: true already creates index
     password: { type: String, required: true },
-    otp: { type: String },
-    otpVerified: { type: Boolean, default: false },
     profilePicture: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
@@ -147,186 +144,75 @@ const authMiddleware = (req, res, next) => {
 
 // --- API Routes ---
 
-// Registration Step 1: Generate OTP and send email
+// In-memory storage for pending registrations (before OTP verification)
+const pendingRegistrations = new Map();
+
+// Auto-cleanup expired OTPs (10 minutes)
+setInterval(() => {
+    const now = Date.now();
+    for (const [email, data] of pendingRegistrations.entries()) {
+        if (now - data.timestamp > 10 * 60 * 1000) { // 10 minutes
+            pendingRegistrations.delete(email);
+            console.log('🗑️ Expired OTP removed for:', email);
+        }
+    }
+}, 60 * 1000); // Check every minute
+
+// ===== REGISTRATION FLOW =====
+
+// Step 1: Register user and send OTP (DON'T save to database yet)
 app.post('/api/register', async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
+        
+        // Validation
+        if (!fullName || !email || !password) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
+        
+        if (password.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters long." });
+        }
+        
+        console.log('\n📝 Registration Request');
+        console.log('Name:', fullName);
+        console.log('Email:', email);
+        
+        // Check if user already exists in database
         const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: "User with this email already exists." });
+        if (existingUser) {
+            console.log('❌ User already exists in database');
+            return res.status(400).json({ message: "User with this email already exists." });
+        }
+        
+        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        console.log('🔐 OTP Generated for', email, ':', otp); // Debug log
+        console.log('🔐 OTP Generated:', otp);
         
-        // Save user with OTP, not verified yet
-        const newUser = new User({ fullName, email, password: hashedPassword, otp, otpVerified: false });
-        await newUser.save();
-        console.log('✅ User saved to database');
-
-        // Send OTP via Gmail SMTP
-        console.log('📧 Attempting to send email...');
-        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
-        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (length: ' + (process.env.GMAIL_PASS?.length || 0) + ')' : 'NOT SET');
-        console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN ? 'SET' : 'NOT SET');
-        console.log('BREVO_SMTP_KEY:', process.env.BREVO_SMTP_KEY ? 'SET' : 'NOT SET');
+        // Store in MEMORY (NOT in database)
+        pendingRegistrations.set(email, {
+            fullName,
+            hashedPassword,
+            otp,
+            timestamp: Date.now()
+        });
         
-        // Check if email credentials are configured (Brevo or Gmail)
-        const hasEmailConfig = (process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN) || 
-                               (process.env.GMAIL_USER && process.env.GMAIL_PASS);
+        console.log('✅ Stored in MEMORY (not in database yet)');
+        console.log('⏳ Waiting for OTP verification...\n');
         
-        if (!hasEmailConfig) {
-            console.warn('⚠️ Email credentials not configured! OTP:', otp);
-            return res.status(201).json({ 
-                message: "OTP generated! (Email not configured - Check server logs for OTP)",
-                otp: otp // Temporary: Send OTP in response for testing
-            });
-        }
+        // Send OTP in response
+        res.status(200).json({ 
+            success: true,
+            message: "Registration initiated! Please verify OTP to complete.",
+            otp: otp // OTP in response for popup/alert
+        });
         
-        try {
-            // Use Brevo (priority) - 300 emails/day free
-            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
-            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL (fallback)');
-            console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN || 'NOT SET');
-            
-            const transporter = nodemailer.createTransport(useBrevo ? {
-                host: 'smtp-relay.brevo.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.BREVO_SMTP_LOGIN,
-                    pass: process.env.BREVO_SMTP_KEY
-                }
-            } : {
-                service: 'gmail',
-                host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.GMAIL_USER,
-                    pass: process.env.GMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-            
-            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
-            const mailOptions = {
-                from: `"Quiz Spark ✨" <${senderEmail}>`,
-                to: email,
-                subject: '🔐 Your Quiz Spark Verification Code',
-                html: `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: #ffffff; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .content { padding: 40px 30px; }
-        .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .otp-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
-        .otp-label { color: #ffffff; font-size: 14px; margin-bottom: 10px; letter-spacing: 1px; }
-        .otp-code { font-size: 48px; font-weight: bold; color: #ffffff; letter-spacing: 8px; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .info-box { background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .info-box p { margin: 5px 0; color: #1976d2; font-size: 14px; }
-        .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .warning p { margin: 5px 0; color: #856404; font-size: 14px; }
-        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; }
-        .footer p { color: #666; font-size: 14px; margin: 5px 0; }
-        .social-links { margin: 20px 0; }
-        .social-links a { color: #667eea; text-decoration: none; margin: 0 10px; font-weight: 600; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>✨ Quiz Spark ✨</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Welcome to the Ultimate Quiz Platform</p>
-        </div>
-        
-        <div class="content">
-            <p class="greeting">Hello <strong>${fullName}</strong>,</p>
-            <p style="color: #555; line-height: 1.6;">
-                Thank you for registering with <strong>Quiz Spark</strong>! We're excited to have you join our community of quiz enthusiasts.
-            </p>
-            
-            <p style="color: #555; line-height: 1.6; margin-top: 20px;">
-                To complete your registration, please use the verification code below:
-            </p>
-            
-            <div class="otp-box">
-                <p class="otp-label">YOUR VERIFICATION CODE</p>
-                <div class="otp-code">${otp}</div>
-                <p style="color: #ffffff; font-size: 12px; margin-top: 15px;">Valid for 10 minutes</p>
-            </div>
-            
-            <div class="info-box">
-                <p><strong>📌 How to use:</strong></p>
-                <p>1. Return to the Quiz Spark registration page</p>
-                <p>2. Enter this 6-digit code in the OTP field</p>
-                <p>3. Click "Verify" to activate your account</p>
-            </div>
-            
-            <div class="warning">
-                <p><strong>⚠️ Security Notice:</strong></p>
-                <p>• Never share this code with anyone</p>
-                <p>• Quiz Spark team will never ask for your OTP</p>
-                <p>• This code expires in 10 minutes</p>
-            </div>
-            
-            <p style="color: #555; line-height: 1.6; margin-top: 30px;">
-                If you didn't request this code, please ignore this email or contact our support team.
-            </p>
-        </div>
-        
-        <div class="footer">
-            <p style="font-weight: 600; color: #333;">Quiz Spark Team ✨</p>
-            <p>Your Ultimate Quiz Platform</p>
-            <div class="social-links">
-                <a href="#">Website</a> | 
-                <a href="#">Support</a> | 
-                <a href="#">Privacy Policy</a>
-            </div>
-            <p style="font-size: 12px; color: #999; margin-top: 20px;">
-                © 2025 Quiz Spark. All rights reserved.
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-            `,
-            };
-            const info = await transporter.sendMail(mailOptions);
-            console.log('✅ Email sent successfully!');
-            console.log('Message ID:', info.messageId);
-            console.log('Response:', info.response);
-            console.log('To:', email);
-            
-            res.status(201).json({ 
-                message: "Registration successful! OTP sent to your email. Please check your inbox and spam folder.",
-                emailSent: true
-            });
-        } catch (emailError) {
-            console.error("❌ Email sending failed!");
-            console.error("Error:", emailError.message);
-            console.error("Error code:", emailError.code);
-            console.error("Full error:", emailError);
-            
-            // Don't delete user, just inform them
-            return res.status(201).json({ 
-                message: "Registration successful! However, email sending failed. Please contact support for OTP.",
-                emailSent: false,
-                error: emailError.message
-            });
-        }
     } catch (error) {
-        console.error("Registration error:", error);
-        console.error("Error details:", error.message);
+        console.error('❌ Registration error:', error);
         res.status(500).json({ 
             message: "Server error during registration.", 
             error: error.message 
@@ -334,95 +220,152 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// Registration Step 2: Verify OTP
+// Step 2: Verify OTP and SAVE to database
 app.post('/api/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: "User not found." });
-        if (user.otpVerified) return res.status(400).json({ message: "OTP already verified." });
-        if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP." });
-        user.otpVerified = true;
-        user.otp = undefined;
-        await user.save();
-        res.status(200).json({ message: "OTP verified, registration complete!" });
-    } catch (error) {
-        res.status(500).json({ message: "Server error during OTP verification.", error });
-    }
-});
-
-
-// Quick cleanup: Delete user by email (for testing)
-app.delete('/api/cleanup-user/:email', async (req, res) => {
-    try {
-        const email = req.params.email;
-        const deletedUser = await User.findOneAndDelete({ email });
         
-        if (!deletedUser) {
-            return res.status(404).json({ message: "User not found with this email." });
+        // Validation
+        if (!email || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required." });
         }
         
-        res.status(200).json({ 
-            message: "User deleted successfully!", 
-            email: email 
-        });
-    } catch (error) {
-        console.error("Error deleting user:", error);
-        res.status(500).json({ message: "Server error while deleting user." });
-    }
-});
-
-// Test email configuration
-app.get('/api/test-email', async (req, res) => {
-    try {
-        console.log('Testing email configuration...');
-        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
-        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
+        console.log('\n🔍 OTP Verification Request');
+        console.log('Email:', email);
+        console.log('OTP:', otp);
         
-        if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
-            return res.status(500).json({ 
-                message: "Email not configured",
-                gmailUser: !!process.env.GMAIL_USER,
-                gmailPass: !!process.env.GMAIL_PASS
+        // Check if pending registration exists
+        const pendingData = pendingRegistrations.get(email);
+        if (!pendingData) {
+            console.log('❌ No pending registration found');
+            return res.status(400).json({ 
+                message: "No pending registration found. Please register first." 
             });
         }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_PASS
-            }
+        
+        // Check if OTP expired (10 minutes)
+        const now = Date.now();
+        const otpAge = now - pendingData.timestamp;
+        if (otpAge > 10 * 60 * 1000) {
+            pendingRegistrations.delete(email);
+            console.log('❌ OTP expired (age:', Math.floor(otpAge / 1000), 'seconds)');
+            return res.status(400).json({ 
+                message: "OTP expired. Please register again." 
+            });
+        }
+        
+        // Verify OTP
+        if (pendingData.otp !== otp) {
+            console.log('❌ Invalid OTP');
+            console.log('Expected:', pendingData.otp);
+            console.log('Received:', otp);
+            return res.status(400).json({ message: "Invalid OTP. Please try again." });
+        }
+        
+        console.log('✅ OTP verified successfully!');
+        console.log('💾 Saving user to database...');
+        
+        // OTP is correct! Now save to database
+        const newUser = new User({
+            fullName: pendingData.fullName,
+            email: email,
+            password: pendingData.hashedPassword
         });
-
-        await transporter.sendMail({
-            from: `"Quiz Spark Test ✨" <${process.env.GMAIL_USER}>`,
-            to: process.env.GMAIL_USER,
-            subject: 'Test Email - Quiz Spark',
-            text: 'If you receive this, email configuration is working!'
+        
+        await newUser.save();
+        console.log('✅ User saved to database');
+        console.log('User ID:', newUser._id);
+        
+        // Remove from pending registrations
+        pendingRegistrations.delete(email);
+        console.log('🗑️ Removed from pending registrations\n');
+        
+        res.status(201).json({ 
+            success: true,
+            message: "Registration complete! You can now login." 
         });
-
-        res.status(200).json({ message: "Test email sent successfully! Check your inbox." });
+        
     } catch (error) {
-        console.error('Email test error:', error);
+        console.error('❌ OTP verification error:', error);
         res.status(500).json({ 
-            message: "Email test failed", 
+            message: "Server error during OTP verification.", 
             error: error.message 
         });
     }
 });
 
+// ===== LOGIN FLOW =====
+
+// Login - Only for OTP verified users (who are in database)
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        
+        // Validation
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required." });
+        }
+        
+        console.log('\n🔐 Login Request');
+        console.log('Email:', email);
+        
+        // Find user in database
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: "Invalid credentials." });
-        if (!user.otpVerified) return res.status(400).json({ message: "OTP not verified. Please verify OTP before login." });
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials." });
-        const token = jwt.sign({ userId: user._id.toString(), fullName: user.fullName }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ message: "Login successful!", token, userId: user._id });
-    } catch (error) { res.status(500).json({ message: "Server error during login." }); }
+        if (!user) {
+            console.log('❌ User not found in database');
+            return res.status(400).json({ 
+                message: "Invalid email or password." 
+            });
+        }
+        
+        console.log('✅ User found in database');
+        console.log('User ID:', user._id);
+        console.log('Name:', user.fullName);
+        
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            console.log('❌ Invalid password');
+            return res.status(400).json({ 
+                message: "Invalid email or password." 
+            });
+        }
+        
+        console.log('✅ Password verified');
+        
+        // Generate JWT token
+        const token = jwt.sign(
+            { 
+                userId: user._id.toString(), 
+                fullName: user.fullName,
+                email: user.email
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
+        
+        console.log('✅ JWT token generated');
+        console.log('Token expires in: 24 hours\n');
+        
+        res.status(200).json({ 
+            success: true,
+            message: "Login successful!",
+            token: token,
+            user: {
+                id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                profilePicture: user.profilePicture || ''
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({ 
+            message: "Server error during login.", 
+            error: error.message 
+        });
+    }
 });
 
 // New Fixed Code for creating a quiz
@@ -755,245 +698,168 @@ app.delete('/api/admin/users/:userId', authMiddleware, async (req, res) => {
     }
 });
 
-// --- Forgot Password Routes ---
+// ===== FORGOT PASSWORD FLOW =====
 
-// Step 1: Send OTP for password reset
+// In-memory storage for password reset OTPs
+const passwordResetOTPs = new Map();
+
+// Auto-cleanup expired password reset OTPs (10 minutes)
+setInterval(() => {
+    const now = Date.now();
+    for (const [email, data] of passwordResetOTPs.entries()) {
+        if (now - data.timestamp > 10 * 60 * 1000) { // 10 minutes
+            passwordResetOTPs.delete(email);
+            console.log('🗑️ Expired password reset OTP removed for:', email);
+        }
+    }
+}, 60 * 1000); // Check every minute
+
+// Step 1: Request password reset OTP
 app.post('/api/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
         
+        // Validation
         if (!email) {
             return res.status(400).json({ message: "Email is required." });
         }
-
+        
+        console.log('\n🔑 Password Reset Request');
+        console.log('Email:', email);
+        
+        // Check if user exists in database
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: "No account found with this email." });
+            console.log('❌ User not found in database');
+            return res.status(404).json({ 
+                message: "No account found with this email." 
+            });
         }
-
+        
+        console.log('✅ User found in database');
+        console.log('User ID:', user._id);
+        console.log('Name:', user.fullName);
+        
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        user.otp = otp;
-        await user.save();
-
-        // Send OTP via email
-        console.log('=== FORGOT PASSWORD OTP ===');
-        console.log('Email:', email);
-        console.log('OTP:', otp);
-        console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT SET');
-        console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET (hidden)' : 'NOT SET');
-        console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN ? 'SET' : 'NOT SET');
-        console.log('BREVO_SMTP_KEY:', process.env.BREVO_SMTP_KEY ? 'SET' : 'NOT SET');
-        console.log('========================');
-
-        // Check if email is configured (Brevo or Gmail)
-        const hasEmailConfig = (process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN) || 
-                               (process.env.GMAIL_USER && process.env.GMAIL_PASS);
+        console.log('🔐 Password Reset OTP Generated:', otp);
         
-        if (!hasEmailConfig) {
-            console.warn('⚠️ Email not configured! OTP printed in console above.');
-            return res.status(200).json({ 
-                message: "OTP generated successfully! (Check server console for OTP - Email not configured)" 
-            });
-        }
-
-        try {
-            // Use Brevo (priority) - 300 emails/day free
-            const useBrevo = process.env.BREVO_SMTP_KEY && process.env.BREVO_SMTP_LOGIN;
-            console.log('📧 Using email service:', useBrevo ? 'BREVO ✅' : 'GMAIL (fallback)');
-            console.log('BREVO_SMTP_LOGIN:', process.env.BREVO_SMTP_LOGIN || 'NOT SET');
-            
-            const transporter = nodemailer.createTransport(useBrevo ? {
-                host: 'smtp-relay.brevo.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.BREVO_SMTP_LOGIN,
-                    pass: process.env.BREVO_SMTP_KEY
-                }
-            } : {
-                service: 'gmail',
-                host: 'smtp.gmail.com',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.GMAIL_USER,
-                    pass: process.env.GMAIL_PASS
-                },
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-
-            const senderEmail = useBrevo ? process.env.BREVO_SMTP_LOGIN : process.env.GMAIL_USER;
-            const mailOptions = {
-                from: `"Quiz Spark ✨" <${senderEmail}>`,
-                to: email,
-                subject: '🔑 Reset Your Quiz Spark Password',
-                html: `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 40px 20px; text-align: center; }
-        .header h1 { color: #ffffff; margin: 0; font-size: 32px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .content { padding: 40px 30px; }
-        .greeting { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .otp-box { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3); }
-        .otp-label { color: #ffffff; font-size: 14px; margin-bottom: 10px; letter-spacing: 1px; }
-        .otp-code { font-size: 48px; font-weight: bold; color: #ffffff; letter-spacing: 8px; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .info-box { background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .info-box p { margin: 5px 0; color: #e65100; font-size: 14px; }
-        .warning { background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .warning p { margin: 5px 0; color: #c62828; font-size: 14px; }
-        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e0e0e0; }
-        .footer p { color: #666; font-size: 14px; margin: 5px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔑 Password Reset</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Quiz Spark Security</p>
-        </div>
+        // Store OTP in memory
+        passwordResetOTPs.set(email, {
+            otp,
+            timestamp: Date.now()
+        });
         
-        <div class="content">
-            <p class="greeting">Hello <strong>${user.fullName}</strong>,</p>
-            <p style="color: #555; line-height: 1.6;">
-                We received a request to reset your <strong>Quiz Spark</strong> account password.
-            </p>
-            
-            <p style="color: #555; line-height: 1.6; margin-top: 20px;">
-                Use the verification code below to reset your password:
-            </p>
-            
-            <div class="otp-box">
-                <p class="otp-label">PASSWORD RESET CODE</p>
-                <div class="otp-code">${otp}</div>
-                <p style="color: #ffffff; font-size: 12px; margin-top: 15px;">Valid for 10 minutes</p>
-            </div>
-            
-            <div class="info-box">
-                <p><strong>📌 Next Steps:</strong></p>
-                <p>1. Return to the Quiz Spark password reset page</p>
-                <p>2. Enter this 6-digit code</p>
-                <p>3. Create your new password</p>
-            </div>
-            
-            <div class="warning">
-                <p><strong>⚠️ Security Alert:</strong></p>
-                <p>• If you didn't request this reset, please ignore this email</p>
-                <p>• Your password will remain unchanged</p>
-                <p>• Consider changing your password if you suspect unauthorized access</p>
-            </div>
-            
-            <p style="color: #555; line-height: 1.6; margin-top: 30px;">
-                For security reasons, this code will expire in 10 minutes.
-            </p>
-        </div>
+        console.log('✅ OTP stored in memory');
+        console.log('⏳ Valid for 10 minutes\n');
         
-        <div class="footer">
-            <p style="font-weight: 600; color: #333;">Quiz Spark Team ✨</p>
-            <p>Your Ultimate Quiz Platform</p>
-            <p style="font-size: 12px; color: #999; margin-top: 20px;">
-                © 2025 Quiz Spark. All rights reserved.
-            </p>
-        </div>
-    </div>
-</body>
-</html>
-                `
-            };
-
-            const info = await transporter.sendMail(mailOptions);
-            console.log('✅ Password reset email sent successfully!');
-            console.log('Message ID:', info.messageId);
-            console.log('Response:', info.response);
-            console.log('To:', email);
-            
-            res.status(200).json({ 
-                message: "OTP sent to your email successfully! Please check your inbox and spam folder.",
-                emailSent: true
-            });
-        } catch (emailError) {
-            console.error('❌ Password reset email failed!');
-            console.error("Error:", emailError.message);
-            console.error("Error code:", emailError.code);
-            console.error("Full error:", emailError);
-            
-            res.status(200).json({ 
-                message: "OTP generated but email sending failed. Please contact support for OTP.",
-                emailSent: false,
-                error: emailError.message
-            });
-        }
+        // Send OTP in response
+        res.status(200).json({ 
+            success: true,
+            message: "Password reset OTP sent!",
+            otp: otp // OTP in response for popup/alert
+        });
+        
     } catch (error) {
-        console.error("Error sending reset OTP:", error);
-        res.status(500).json({ message: "Failed to send OTP. Please try again." });
+        console.error('❌ Forgot password error:', error);
+        res.status(500).json({ 
+            message: "Server error during password reset request.", 
+            error: error.message 
+        });
     }
 });
 
-// Step 2: Verify OTP for password reset
-app.post('/api/verify-reset-otp', async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        if (!email || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required." });
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "User not found." });
-        }
-
-        if (user.otp !== otp) {
-            return res.status(400).json({ message: "Invalid OTP. Please try again." });
-        }
-
-        res.status(200).json({ message: "OTP verified successfully! You can now reset your password." });
-    } catch (error) {
-        console.error("Error verifying reset OTP:", error);
-        res.status(500).json({ message: "Server error while verifying OTP." });
-    }
-});
-
-// Step 3: Reset Password
+// Step 2: Verify OTP and reset password
 app.post('/api/reset-password', async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
         
+        // Validation
         if (!email || !otp || !newPassword) {
-            return res.status(400).json({ message: "Email, OTP, and new password are required." });
+            return res.status(400).json({ 
+                message: "Email, OTP, and new password are required." 
+            });
         }
-
+        
         if (newPassword.length < 6) {
-            return res.status(400).json({ message: "Password must be at least 6 characters long." });
+            return res.status(400).json({ 
+                message: "Password must be at least 6 characters long." 
+            });
         }
-
+        
+        console.log('\n🔍 Password Reset Verification');
+        console.log('Email:', email);
+        console.log('OTP:', otp);
+        
+        // Check if OTP exists in memory
+        const resetData = passwordResetOTPs.get(email);
+        if (!resetData) {
+            console.log('❌ No password reset request found');
+            return res.status(400).json({ 
+                message: "No password reset request found. Please request a new OTP." 
+            });
+        }
+        
+        // Check if OTP expired (10 minutes)
+        const now = Date.now();
+        const otpAge = now - resetData.timestamp;
+        if (otpAge > 10 * 60 * 1000) {
+            passwordResetOTPs.delete(email);
+            console.log('❌ OTP expired (age:', Math.floor(otpAge / 1000), 'seconds)');
+            return res.status(400).json({ 
+                message: "OTP expired. Please request a new one." 
+            });
+        }
+        
+        // Verify OTP
+        if (resetData.otp !== otp) {
+            console.log('❌ Invalid OTP');
+            console.log('Expected:', resetData.otp);
+            console.log('Received:', otp);
+            return res.status(400).json({ 
+                message: "Invalid OTP. Please try again." 
+            });
+        }
+        
+        console.log('✅ OTP verified successfully!');
+        
+        // Find user in database
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: "User not found." });
+            console.log('❌ User not found in database');
+            return res.status(404).json({ 
+                message: "User not found." 
+            });
         }
-
-        if (user.otp !== otp) {
-            return res.status(400).json({ message: "Invalid OTP. Please try again." });
-        }
-
+        
+        console.log('💾 Updating password in database...');
+        
         // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        
+        // Update password
         user.password = hashedPassword;
-        user.otp = ''; // Clear OTP after successful reset
         await user.save();
-
-        res.status(200).json({ message: "Password reset successfully! You can now login with your new password." });
+        
+        console.log('✅ Password updated successfully');
+        console.log('User ID:', user._id);
+        
+        // Remove OTP from memory
+        passwordResetOTPs.delete(email);
+        console.log('🗑️ Removed OTP from memory\n');
+        
+        res.status(200).json({ 
+            success: true,
+            message: "Password reset successfully! You can now login with your new password." 
+        });
+        
     } catch (error) {
-        console.error("Error resetting password:", error);
-        res.status(500).json({ message: "Server error while resetting password." });
+        console.error('❌ Password reset error:', error);
+        res.status(500).json({ 
+            message: "Server error during password reset.", 
+            error: error.message 
+        });
     }
 });
 

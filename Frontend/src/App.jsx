@@ -117,7 +117,12 @@ function App() {
       const userData = { fullName, email, password };
       try {
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, userData);
-        alert(response.data.message);
+        // Show OTP if it's in the response (for development)
+        if (response.data.otp) {
+          alert(`${response.data.message}\n\n🔐 Your OTP: ${response.data.otp}`);
+        } else {
+          alert(response.data.message);
+        }
         setOtpSent(true);
       } catch (error) {
         alert(error.response?.data?.message || 'An error occurred.');
