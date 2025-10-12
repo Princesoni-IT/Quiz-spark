@@ -300,17 +300,27 @@ app.post('/api/register', async (req, res) => {
 </html>
             `,
             };
-            await transporter.sendMail(mailOptions);
-            console.log('Email sent successfully to:', email);
+            const info = await transporter.sendMail(mailOptions);
+            console.log('✅ Email sent successfully!');
+            console.log('Message ID:', info.messageId);
+            console.log('Response:', info.response);
+            console.log('To:', email);
             
-            res.status(201).json({ message: "OTP sent to your email!" });
+            res.status(201).json({ 
+                message: "Registration successful! OTP sent to your email. Please check your inbox and spam folder.",
+                emailSent: true
+            });
         } catch (emailError) {
-            console.error("Email sending failed:", emailError.message);
-            // If email fails, delete the user and return error
-            await User.deleteOne({ email });
-            return res.status(500).json({ 
-                message: "Failed to send OTP email. Please check your email or try again.", 
-                error: emailError.message 
+            console.error("❌ Email sending failed!");
+            console.error("Error:", emailError.message);
+            console.error("Error code:", emailError.code);
+            console.error("Full error:", emailError);
+            
+            // Don't delete user, just inform them
+            return res.status(201).json({ 
+                message: "Registration successful! However, email sending failed. Please contact support for OTP.",
+                emailSent: false,
+                error: emailError.message
             });
         }
     } catch (error) {
@@ -897,12 +907,26 @@ app.post('/api/forgot-password', async (req, res) => {
                 `
             };
 
-            await transporter.sendMail(mailOptions);
-            res.status(200).json({ message: "OTP sent to your email successfully!" });
-        } catch (emailError) {
-            console.error('Email sending failed:', emailError);
+            const info = await transporter.sendMail(mailOptions);
+            console.log('✅ Password reset email sent successfully!');
+            console.log('Message ID:', info.messageId);
+            console.log('Response:', info.response);
+            console.log('To:', email);
+            
             res.status(200).json({ 
-                message: "OTP generated! Check server console (Email sending failed)" 
+                message: "OTP sent to your email successfully! Please check your inbox and spam folder.",
+                emailSent: true
+            });
+        } catch (emailError) {
+            console.error('❌ Password reset email failed!');
+            console.error("Error:", emailError.message);
+            console.error("Error code:", emailError.code);
+            console.error("Full error:", emailError);
+            
+            res.status(200).json({ 
+                message: "OTP generated but email sending failed. Please contact support for OTP.",
+                emailSent: false,
+                error: emailError.message
             });
         }
     } catch (error) {
