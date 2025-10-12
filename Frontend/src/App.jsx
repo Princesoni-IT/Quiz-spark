@@ -117,12 +117,7 @@ function App() {
       const userData = { fullName, email, password };
       try {
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, userData);
-        // Show OTP if email failed
-        if (response.data.otp) {
-          alert(`${response.data.message}\n\nYour OTP: ${response.data.otp}\n\n(Email delivery failed, use this OTP)`);
-        } else {
-          alert(response.data.message);
-        }
+        alert(response.data.message);
         setOtpSent(true);
       } catch (error) {
         alert(error.response?.data?.message || 'An error occurred.');
