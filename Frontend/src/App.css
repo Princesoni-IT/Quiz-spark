@@ -91,13 +91,12 @@ html {
 
 .create-quiz-container, .add-questions-container {
   width: 100%;
-  max-width: 700px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 90vh;
-  position: relative;
-  padding-top: 90px;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
   margin: 0 auto;
 }
 .back-btn {
@@ -276,7 +275,10 @@ html {
   .quiz-list-item { flex-direction: column !important; gap: 15px !important; align-items: flex-start !important; }
   .quiz-actions { width: 100%; justify-content: space-between; }
   
-  .create-quiz-container, .add-questions-container { padding-top: 70px !important; max-width: 95% !important; }
+  .create-quiz-container, .add-questions-container { 
+    padding: 20px !important; 
+    justify-content: flex-start !important;
+  }
   .options-grid { grid-template-columns: 1fr !important; }
 }
 
