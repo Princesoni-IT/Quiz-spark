@@ -11,6 +11,8 @@ const xlsx = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
+const axios = require('axios');
+const pdf = require('pdf-parse');
 
 const app = express();
 const server = http.createServer(app);
@@ -407,6 +409,17 @@ app.get('/api/quizzes', authMiddleware, async (req, res) => {
         res.json(quizzes);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch quizzes", error });
+    }
+});
+
+// Get single quiz by ID
+app.get('/api/quizzes/:quizId', authMiddleware, async (req, res) => {
+    try {
+        const quiz = await Quiz.findById(req.params.quizId);
+        if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+        res.json(quiz);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch quiz", error });
     }
 });
 
@@ -1029,6 +1042,74 @@ app.post('/api/quizzes/:quizId/upload-questions', authMiddleware, upload.single(
         console.error(error);
         res.status(500).json({ message: error.message || 'Failed to upload questions' });
     }
+});
+
+// --- AI Quiz Routes ---
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+console.log('🔑 GEMINI_API_KEY loaded:', GEMINI_API_KEY ? 'YES ✅' : 'NO ❌');
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// Helper to call Gemini
+async function generateWithGemini(prompt) {
+  try {
+    console.log('🤖 Calling Gemini API...');
+    const response = await axios.post(GEMINI_API_URL, {
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+    // Response se JSON nikalne ke liye safai
+    const textResponse = response.data.candidates[0].content.parts[0].text;
+    console.log('✅ Gemini API response received');
+    return textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+  } catch (error) {
+    console.error('❌ Error calling Gemini API:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to communicate with the AI model.');
+  }
+}
+
+// Route to generate quiz from a topic
+app.post('/api/ai/generate-from-topic', authMiddleware, async (req, res) => {
+  const { topic, numQuestions } = req.body;
+
+  const prompt = `Generate ${numQuestions} multiple-choice questions about "${topic}". For each question, provide four options and indicate the correct answer. Format the output as a valid JSON array of objects, where each object has "text", "options" (an array of 4 strings), and "correctAnswerIndex" (a number from 0 to 3). Example: [{"text": "What is 2+2?", "options": ["3", "4", "5", "6"], "correctAnswerIndex": 1}]`;
+
+  try {
+    const jsonResponse = await generateWithGemini(prompt);
+    const questions = JSON.parse(jsonResponse);
+    res.json({ questions });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to generate questions.', error: error.message });
+  }
+});
+
+
+// Syllabus upload ke liye multer config
+const syllabusUpload = multer({ storage: multer.memoryStorage() });
+
+// Syllabus se topics nikalne ka route
+app.post('/api/ai/extract-topics', authMiddleware, syllabusUpload.single('syllabus'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+
+  let text = '';
+  try {
+    if (req.file.mimetype === 'application/pdf') {
+      const data = await pdf(req.file.buffer);
+      text = data.text;
+    } else {
+      text = req.file.buffer.toString('utf8');
+    }
+
+    const prompt = `Summarize the key topics from the following text. List them as a simple JSON array of strings. For example: ["Topic 1", "Topic 2", "Topic 3"]. Text: """${text}"""`;
+    
+    const jsonResponse = await generateWithGemini(prompt);
+    const topics = JSON.parse(jsonResponse);
+    
+    res.json({ topics });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to process syllabus.', error: error.message });
+  }
 });
 
 

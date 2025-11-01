@@ -7,6 +7,7 @@ import QuizPlayer from './QuizPlayer';
 // Socket connection ko component ke bahar banaya
 const socket = io(import.meta.env.VITE_API_URL);
 
+
 function Lobby({ quiz, user, onBack, onKicked }) {
   const [studentList, setStudentList] = useState([]);
   const [showCountdown, setShowCountdown] = useState(false);
@@ -70,7 +71,7 @@ function Lobby({ quiz, user, onBack, onKicked }) {
   return (
     <div style={{
       minHeight: '100vh',
-      padding: window.innerWidth <= 768 ? '80px 15px 40px 15px' : '100px 20px 40px 20px',
+      padding: '100px 20px 40px 20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <div style={{
@@ -87,22 +88,14 @@ function Lobby({ quiz, user, onBack, onKicked }) {
             padding: '12px 24px',
             borderRadius: '12px',
             cursor: 'pointer',
-            fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+            fontSize: '16px',
             fontWeight: '600',
+            backdropFilter: 'blur(10px)',
             transition: 'all 0.3s ease',
-            marginBottom: '30px',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+            marginBottom: '30px'
           }}
-          onMouseOver={(e) => {
-            e.target.style.background = '#5a5fd8';
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.4)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.background = '#667eea';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-          }}
+          onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+          onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
         >
           ← Back
         </button>
@@ -111,16 +104,16 @@ function Lobby({ quiz, user, onBack, onKicked }) {
         <div style={{
           background: 'white',
           borderRadius: '24px',
-          padding: window.innerWidth <= 768 ? '25px' : '40px',
+          padding: '40px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           textAlign: 'center'
         }}>
           {isAdmin ? (
             <>
               {/* Admin View */}
-              <div style={{ fontSize: window.innerWidth <= 768 ? '48px' : '64px', marginBottom: '20px' }}>🎉</div>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
               <h2 style={{
-                fontSize: window.innerWidth <= 768 ? '24px' : '32px',
+                fontSize: '32px',
                 fontWeight: '800',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 WebkitBackgroundClip: 'text',
@@ -131,7 +124,7 @@ function Lobby({ quiz, user, onBack, onKicked }) {
                 Quiz Room Created!
               </h2>
               <p style={{
-                fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+                fontSize: '16px',
                 color: '#666',
                 marginBottom: '30px'
               }}>
@@ -145,7 +138,7 @@ function Lobby({ quiz, user, onBack, onKicked }) {
                   background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
                   border: '3px dashed #667eea',
                   borderRadius: '20px',
-                  padding: window.innerWidth <= 768 ? '20px' : '30px',
+                  padding: '30px',
                   marginBottom: '40px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
@@ -172,19 +165,18 @@ function Lobby({ quiz, user, onBack, onKicked }) {
                 }}></div>
                 
                 <div style={{
-                  fontSize: window.innerWidth <= 768 ? '32px' : '48px',
+                  fontSize: '48px',
                   fontWeight: '800',
                   color: '#1e2a78',
-                  letterSpacing: window.innerWidth <= 768 ? '4px' : '8px',
+                  letterSpacing: '8px',
                   marginBottom: '12px',
-                  fontFamily: 'monospace',
-                  wordBreak: 'break-all'
+                  fontFamily: 'monospace'
                 }}>
                   {quiz.quizCode}
                 </div>
                 <p style={{
                   color: '#667eea',
-                  fontSize: window.innerWidth <= 768 ? '12px' : '14px',
+                  fontSize: '14px',
                   fontWeight: '600',
                   margin: 0,
                   display: 'flex',
@@ -199,9 +191,9 @@ function Lobby({ quiz, user, onBack, onKicked }) {
           ) : (
             <>
               {/* Student View */}
-              <div style={{ fontSize: window.innerWidth <= 768 ? '48px' : '64px', marginBottom: '20px' }}>✅</div>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
               <h2 style={{
-                fontSize: window.innerWidth <= 768 ? '20px' : '28px',
+                fontSize: '28px',
                 fontWeight: '800',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 WebkitBackgroundClip: 'text',
@@ -212,7 +204,7 @@ function Lobby({ quiz, user, onBack, onKicked }) {
                 You've Joined: {quiz.title}
               </h2>
               <p style={{
-                fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+                fontSize: '16px',
                 color: '#666',
                 marginBottom: '40px'
               }}>

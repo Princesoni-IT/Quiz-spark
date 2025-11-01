@@ -176,27 +176,19 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
   };
 
   return (
-    <div className="add-questions-container" style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      padding: '20px',
-      width: '100%'
-    }}>
+    <div className="add-questions-container">
       <div style={{
         maxWidth: '900px',
-        width: '100%',
         margin: '0 auto',
         background: 'white',
         borderRadius: '24px',
-        padding: window.innerWidth <= 768 ? '20px' : '40px',
+        padding: '40px',
         boxShadow: '0 20px 60px rgba(0,0,0,0.1)'
       }}>
         {/* Header */}
         <div style={{ marginBottom: '30px', textAlign: 'center' }}>
           <h2 style={{
-            fontSize: window.innerWidth <= 768 ? '24px' : '32px',
+            fontSize: '32px',
             fontWeight: '800',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text',
@@ -207,7 +199,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
             {quiz.questions && quiz.questions.length > 0 ? '✏️ Edit' : '➕ Add'} Questions
           </h2>
           <p style={{
-            fontSize: window.innerWidth <= 768 ? '14px' : '18px',
+            fontSize: '18px',
             color: '#666',
             fontWeight: '500'
           }}>
@@ -230,7 +222,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
         {/* File Upload Section */}
         <div style={{ 
           background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-          padding: window.innerWidth <= 768 ? '20px' : '30px', 
+          padding: '30px', 
           borderRadius: '20px', 
           marginBottom: '30px',
           border: '3px dashed #667eea',
@@ -250,17 +242,16 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
           <h3 style={{ 
             marginTop: 0, 
             color: '#667eea',
-            fontSize: window.innerWidth <= 768 ? '18px' : '22px',
+            fontSize: '22px',
             fontWeight: '700',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            flexWrap: 'wrap'
+            gap: '10px'
           }}>
             📁 Bulk Upload Questions
           </h3>
           <p style={{ 
-            fontSize: window.innerWidth <= 768 ? '13px' : '15px', 
+            fontSize: '15px', 
             color: '#555', 
             marginBottom: '20px',
             lineHeight: '1.6'
@@ -402,7 +393,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
             </label>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '15px'
             }}>
               {options.map((option, index) => (
@@ -451,7 +442,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '15px', flexDirection: window.innerWidth <= 768 ? 'column' : 'row' }}>
+          <div style={{ display: 'flex', gap: '15px' }}>
             <button 
               onClick={handleAddOrUpdateQuestion}
               style={{
@@ -461,7 +452,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
                 border: 'none',
                 padding: '16px',
                 borderRadius: '12px',
-                fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+                fontSize: '16px',
                 fontWeight: '700',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
@@ -482,7 +473,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
                   border: 'none',
                   padding: '16px 32px',
                   borderRadius: '12px',
-                  fontSize: window.innerWidth <= 768 ? '14px' : '16px',
+                  fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
@@ -649,19 +640,19 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
           display: 'flex',
           gap: '15px',
           marginTop: '30px',
-          flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+          flexWrap: 'wrap'
         }}>
           <button 
             onClick={handleFinish}
             style={{
               flex: 1,
-              minWidth: window.innerWidth <= 768 ? 'auto' : '250px',
+              minWidth: '250px',
               background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
               color: 'white',
               border: 'none',
               padding: '18px 32px',
               borderRadius: '12px',
-              fontSize: window.innerWidth <= 768 ? '15px' : '17px',
+              fontSize: '17px',
               fontWeight: '700',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
@@ -681,7 +672,7 @@ What is the capital of France?,London,Berlin,Paris,Rome,3`;
               border: '2px solid #667eea',
               padding: '18px 32px',
               borderRadius: '12px',
-              fontSize: window.innerWidth <= 768 ? '15px' : '17px',
+              fontSize: '17px',
               fontWeight: '700',
               cursor: 'pointer',
               transition: 'all 0.3s ease'

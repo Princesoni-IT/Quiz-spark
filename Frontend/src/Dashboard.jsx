@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEditQuiz naya prop
+function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack, onSoloPlay }) { // onSoloPlay added
   const [quizzes, setQuizzes] = useState([]);
 
   useEffect(() => {
@@ -83,9 +83,27 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack }) { // onEdi
                   <p>Code: <strong>{quiz.quizCode}</strong> | Questions: {quiz.questions.length}/{quiz.settings.numQuestions}</p>
                 </div>
                 <div className="quiz-actions">
-                    {/* Naye Edit aur Delete buttons */}
+                    {/* Edit, Delete, Solo Play, and Start Quiz buttons */}
                     <button onClick={() => onEditQuiz(quiz)} className="btn-edit">Edit</button>
                     <button onClick={() => handleDelete(quiz._id)} className="btn-delete">Delete</button>
+                    <button 
+                      onClick={() => onSoloPlay(quiz)} 
+                      className="btn-solo"
+                      style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                      onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                    >
+                      🎮 Solo Play
+                    </button>
                     <button onClick={() => onStartQuiz(quiz)} className="btn-start">Start Quiz</button>
                 </div>
               </div>

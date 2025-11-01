@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios'; // Backend se baat karne ke liye
 import './App.css';
 
-function JoinQuiz({ onBack, onQuizJoined }) {
+function JoinQuiz({ onBack, onQuizJoined, onSoloPlay }) {
   const [roomCode, setRoomCode] = useState('');
 
   const handleJoin = async (event) => {

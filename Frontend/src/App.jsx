@@ -21,6 +21,8 @@ import About from './About.jsx';
 import ForgotPassword from './ForgotPassword.jsx';
 import { jwtDecode } from 'jwt-decode';
 import io from 'socket.io-client';
+import AIQuiz from './AIQuiz.jsx';
+import SoloQuizPlayer from './SoloQuizPlayer.jsx';
 
 // Configure axios defaults for better handling of cold starts
 axios.defaults.timeout = 60000; // 60 seconds timeout for cold starts
@@ -160,6 +162,11 @@ function App() {
     setCurrentPage('addQuestions');
   };
   
+  const handleAIQuizCreated = (quizData) => {
+    setActiveQuiz(quizData);
+    setCurrentPage('dashboard'); // Go to dashboard after AI quiz creation
+  };
+  
   const handleQuestionsAdded = async (questions) => { 
     try {
         const token = localStorage.getItem('token');
@@ -186,6 +193,11 @@ function App() {
   const handleQuizJoined = (quizData) => {
     setActiveQuiz(quizData);
     setCurrentPage('lobby');
+  };
+  
+  const handleSoloPlay = (quizData) => {
+    setActiveQuiz(quizData);
+    setCurrentPage('soloQuiz');
   };
 
   const handleKicked = () => {
@@ -218,17 +230,31 @@ function App() {
   );
 
   const renderHomePage = () => (
-    <>
-      {currentUser && (
-        <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '1.3rem', fontWeight: 600, color: '#1e2a78' }}>
-          Welcome, {currentUser.fullName}!
-        </div>
-      )}
-      <main className="options-container" style={{ marginTop: '40px' }}>
-        <div className="option-card"><h2>Create Room</h2><p>Setup a new quiz as an Admin</p><button onClick={() => setCurrentPage('dashboard')} className="btn create-btn">Go to Dashboard</button></div>
-        <div className="option-card"><h2>Join Room</h2><p>Enter a code to join a quiz</p><button onClick={() => setCurrentPage('joinQuiz')} className="btn join-btn">Join a Quiz</button></div>
-      </main>
-      <footer className="app-footer"><h3>Made With 👨‍💻Team ✨Spark (Prince, Som, Akhlesh)</h3></footer>
+  <>
+    {currentUser && (
+      <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '1.3rem', fontWeight: 600, color: '#1e2a78' }}>
+        Welcome, {currentUser.fullName}!
+      </div>
+    )}
+    <main className="options-container" style={{ marginTop: '40px' }}>
+      <div className="option-card">
+        <h2>Create Room</h2>
+        <p>Setup a new quiz as an Admin</p>
+        <button onClick={() => setCurrentPage('dashboard')} className="btn create-btn">Go to Dashboard</button>
+      </div>
+      <div className="option-card">
+        <h2>Join Room</h2>
+        <p>Enter a code to join a quiz</p>
+        <button onClick={() => setCurrentPage('joinQuiz')} className="btn join-btn">Join a Quiz</button>
+      </div>
+      {/* New AI Quiz Card */}
+      <div className="option-card">
+        <h2>AI Quiz</h2>
+        <p>Generate a quiz using Artificial Intelligence</p>
+        <button onClick={() => setCurrentPage('aiQuiz')} className="btn ai-btn">Create with AI</button>
+      </div>
+    </main>
+      <footer className="app-footer"><h3>Made With 👨‍💻Team ✨Spark (Prince, som, Akhlesh)</h3></footer>
     </>
   );
 
@@ -239,11 +265,12 @@ function App() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'home': return renderHomePage();
-      case 'dashboard': return <Dashboard key={Date.now()} onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} onBack={() => setCurrentPage('home')} />;
+      case 'dashboard': return <Dashboard key={Date.now()} onCreateQuiz={() => setCurrentPage('createQuiz')} onStartQuiz={handleStartQuiz} onEditQuiz={handleEditQuiz} onSoloPlay={handleSoloPlay} onBack={() => setCurrentPage('home')} />;
       case 'createQuiz': return <CreateQuiz onQuizCreated={handleQuizCreated} onBack={() => setCurrentPage('dashboard')} />;
       case 'addQuestions': return <AddQuestions quiz={activeQuiz} onBack={() => setCurrentPage('dashboard')} onFinish={handleQuestionsAdded} />;
       case 'lobby': return <Lobby quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} onKicked={handleKicked} />;
-      case 'joinQuiz': return <JoinQuiz onBack={() => setCurrentPage('home')} onQuizJoined={handleQuizJoined} />;
+      case 'joinQuiz': return <JoinQuiz onBack={() => setCurrentPage('home')} onQuizJoined={handleQuizJoined} onSoloPlay={handleSoloPlay} />;
+      case 'soloQuiz': return <SoloQuizPlayer quiz={activeQuiz} user={currentUser} onBack={() => setCurrentPage('home')} />;
       case 'countdown':
         return <QuizCountdown />;
       case 'quizPlayer':
@@ -262,6 +289,8 @@ function App() {
         return <UserManagement onBack={() => setCurrentPage('home')} />;
       case 'about':
         return <About onBack={() => setCurrentPage('home')} />;
+       case 'aiQuiz': // Add this new case
+        return <AIQuiz onBack={() => setCurrentPage('home')} onQuizCreated={handleAIQuizCreated} onAuthError={handleLogout} onPracticeNow={handleSoloPlay} />;  
       case 'forgotPassword':
         return <ForgotPassword onBack={() => setCurrentPage('auth')} onLoginRedirect={() => { setCurrentPage('auth'); setIsLoginView(true); }} />;
       case 'auth': 

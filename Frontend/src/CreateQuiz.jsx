@@ -207,7 +207,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
                     height: '8px',
                     borderRadius: '4px',
                     outline: 'none',
-                    background: `linear-gradient(to right, #667eea 0%, #667eea ${(numQuestions / 50) * 100}%, #e0e0e0 ${(numQuestions / 50) * 100}%, #e0e0e0 100%)` 
+                    background: `linear-gradient(to right, #667eea 0%, #667eea ${(numQuestions / 50) * 100}%, #e0e0e0 ${(numQuestions / 50) * 100}%, #e0e0e0 100%)`
                   }}
                 />
                 <div style={{
@@ -245,7 +245,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
                     height: '8px',
                     borderRadius: '4px',
                     outline: 'none',
-                    background: `linear-gradient(to right, #667eea 0%, #667eea ${((timePerQuestion - 5) / 115) * 100}%, #e0e0e0 ${((timePerQuestion - 5) / 115) * 100}%, #e0e0e0 100%)` 
+                    background: `linear-gradient(to right, #667eea 0%, #667eea ${((timePerQuestion - 5) / 115) * 100}%, #e0e0e0 ${((timePerQuestion - 5) / 115) * 100}%, #e0e0e0 100%)`
                   }}
                 />
                 <div style={{
@@ -283,7 +283,7 @@ function CreateQuiz({ onBack, onQuizCreated }) {
                     height: '8px',
                     borderRadius: '4px',
                     outline: 'none',
-                    background: `linear-gradient(to right, #667eea 0%, #667eea ${((pointsPerQuestion - 1) / 19) * 100}%, #e0e0e0 ${((pointsPerQuestion - 1) / 19) * 100}%, #e0e0e0 100%)` 
+                    background: `linear-gradient(to right, #667eea 0%, #667eea ${((pointsPerQuestion - 1) / 19) * 100}%, #e0e0e0 ${((pointsPerQuestion - 1) / 19) * 100}%, #e0e0e0 100%)`
                   }}
                 />
                 <div style={{
