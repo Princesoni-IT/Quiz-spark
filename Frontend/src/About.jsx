@@ -20,13 +20,38 @@ function About({ onBack }) {
           <h3 style={{ color: '#1e2a78', marginBottom: '10px' }}>✨ Key Features</h3>
           <ul style={{ paddingLeft: '20px' }}>
             <li>📝 Create custom quizzes with multiple-choice questions</li>
-            <li>📊 Upload questions in bulk via Excel/CSV files</li>
+            <li>🤖 AI-Powered Quiz Generation using Google Gemini AI</li>
+            <li>📊 Upload questions in bulk via Excel/CSV/PDF files</li>
             <li>🎮 Real-time quiz sessions with live leaderboards</li>
             <li>⏱️ Customizable time limits and scoring</li>
             <li>🔒 Secure authentication with OTP verification</li>
             <li>📱 Responsive design for all devices</li>
             <li>🏆 Instant results and rankings</li>
             <li>👥 Support for multiple participants</li>
+            <li>🎯 Solo practice mode for self-assessment</li>
+          </ul>
+        </section>
+
+        <section style={{ 
+          marginBottom: '30px',
+          background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '2px solid #667eea'
+        }}>
+          <h3 style={{ color: '#667eea', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🤖 AI-Powered Quiz Generation (New!)
+          </h3>
+          <p>
+            Generate intelligent quizzes instantly using Google's Gemini AI! Simply provide a topic, 
+            number of questions, and difficulty level - our AI will create comprehensive quizzes with:
+          </p>
+          <ul style={{ paddingLeft: '20px', marginTop: '10px' }}>
+            <li>✨ Smart question generation based on your topic</li>
+            <li>🎯 Multiple difficulty levels (Easy, Medium, Hard)</li>
+            <li>📚 Support for text input, file uploads (PDF, TXT, DOCX)</li>
+            <li>⚡ Instant quiz creation in seconds</li>
+            <li>🎮 Ready-to-use practice mode</li>
           </ul>
         </section>
 
@@ -61,6 +86,7 @@ function About({ onBack }) {
                 <li>MongoDB</li>
                 <li>Socket.io</li>
                 <li>JWT Authentication</li>
+                <li>Google Gemini AI</li>
               </ul>
             </div>
           </div>
@@ -73,8 +99,8 @@ function About({ onBack }) {
             or contact our support team.
           </p>
           <p style={{ marginTop: '10px' }}>
-            <strong>Version:</strong> 1.0.0<br />
-            <strong>Last Updated:</strong> October 2025
+            <strong>Version:</strong> 2.0.0<br />
+            <strong>Last Updated:</strong> November 2025
           </p>
         </section>
 

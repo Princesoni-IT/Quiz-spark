@@ -63,6 +63,7 @@ html {
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
+  padding-top: 80px;
 }
 
 /* ================== HOME PAGE STYLES ================== */
@@ -249,6 +250,8 @@ html {
 
 /* Mobile Devices (320px - 480px) */
 @media (max-width: 480px) {
+  .container { padding-top: 90px !important; }
+  
   .app-header h1 { font-size: 2rem !important; }
   .app-header p { font-size: 1rem !important; }
   

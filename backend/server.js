@@ -20,6 +20,7 @@ const io = new Server(server, {
     cors: { 
         origin: [
             "http://localhost:5173",
+            "http://localhost:5174",
             "https://quiz-spark.netlify.app",  // Production URL
             /\.netlify\.app$/  // Allow all Netlify subdomains
         ], 
@@ -32,6 +33,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
     origin: [
         "http://localhost:5173",
+        "http://localhost:5174",
         "https://quiz-spark.netlify.app",
         /\.netlify\.app$/
     ],

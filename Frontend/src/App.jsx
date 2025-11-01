@@ -109,7 +109,9 @@ function App() {
         setCurrentPage('home');
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'An error occurred.');
+      console.error('Login error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'An error occurred. Please check if backend is running.';
+      alert(errorMsg);
     }
   };
   
@@ -131,7 +133,9 @@ function App() {
         }
         setOtpSent(true);
       } catch (error) {
-        alert(error.response?.data?.message || 'An error occurred.');
+        console.error('Signup error:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'An error occurred. Please check if backend is running.';
+        alert(errorMsg);
       }
     } else {
       // Step 2: Verify OTP
@@ -145,7 +149,9 @@ function App() {
         setPassword('');
         setOtp('');
       } catch (error) {
-        alert(error.response?.data?.message || 'OTP verification failed.');
+        console.error('OTP verification error:', error);
+        const errorMsg = error.response?.data?.message || error.message || 'OTP verification failed.';
+        alert(errorMsg);
       }
     }
   };
