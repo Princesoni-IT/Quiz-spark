@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Sidebar.css';
 
-function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
+function Sidebar({ isOpen, onClose, onLogout, onNavigate, user, isDarkMode, onToggleDarkMode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -56,6 +56,25 @@ function Sidebar({ isOpen, onClose, onLogout, onNavigate, user }) {
           <li onClick={() => handleOptionClick('profilePicture')}>📸 Profile Picture</li>
           <li onClick={() => handleOptionClick('feedback')}>💬 Give Feedback</li>
           <li onClick={() => handleOptionClick('about')}>ℹ️ About</li>
+          
+          {/* Dark Mode Toggle */}
+          <li 
+            onClick={onToggleDarkMode} 
+            className="dark-mode-toggle"
+            style={{ 
+              borderTop: '1px solid #e0e0e0', 
+              marginTop: '10px', 
+              paddingTop: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <span>{isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
+            <div className={`toggle-switch ${isDarkMode ? 'active' : ''}`}>
+              <div className="toggle-slider"></div>
+            </div>
+          </li>
           
           {/* Admin Only Options */}
           {isAdmin && (

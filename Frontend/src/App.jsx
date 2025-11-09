@@ -39,6 +39,11 @@ function App() {
   const [password, setPassword] = useState('');
   // Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    return savedMode === 'true';
+  });
 
   // Fetch current user from API
   const fetchCurrentUser = async (token) => {
@@ -61,6 +66,20 @@ function App() {
       const decodedUser = jwtDecode(token);
       setCurrentUser({ id: decodedUser.userId, fullName: decodedUser.fullName });
     }
+  };
+
+  // Dark mode effect
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    localStorage.setItem('darkMode', isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   useEffect(() => {
@@ -238,7 +257,7 @@ function App() {
   const renderHomePage = () => (
   <>
     {currentUser && (
-      <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '1.3rem', fontWeight: 600, color: '#1e2a78' }}>
+      <div className="welcome-message">
         Welcome, {currentUser.fullName}!
       </div>
     )}
@@ -319,6 +338,8 @@ function App() {
             onLogout={handleLogout}
             onNavigate={handleSidebarNavigate}
             user={currentUser}
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
           />
         </>
       )}

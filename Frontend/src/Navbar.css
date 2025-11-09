@@ -1,6 +1,8 @@
 .navbar {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: white;
   padding: 15px 25px;
   display: flex;
@@ -11,7 +13,7 @@
   top: 0;
   left: 0;
   z-index: 1001;
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .navbar-brand {
@@ -95,4 +97,21 @@
   .profile-name {
     font-size: 0.95rem;
   }
+}
+
+/* Dark Mode Styles */
+body.dark-mode .navbar {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.6) 100%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .navbar-profile {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .navbar-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
