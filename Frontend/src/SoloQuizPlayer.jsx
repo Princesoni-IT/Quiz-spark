@@ -238,74 +238,34 @@ const SoloQuizPlayer = ({ quiz, user, onBack, onFinish }) => {
       padding: '100px 20px 40px 20px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      <div style={{
-        maxWidth: '900px',
-        margin: '0 auto'
-      }}>
+      <div className="solo-quiz-container">
         {/* Header */}
-        <div style={{
-          background: 'white',
-          borderRadius: '16px',
-          padding: '20px 30px',
-          marginBottom: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
+        <div className="solo-quiz-header">
           <div>
-            <h2 style={{ margin: 0, color: '#333', fontSize: '24px' }}>
+            <h2 className="solo-quiz-title">
               Solo Practice Mode
             </h2>
-            <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '14px' }}>
+            <p className="solo-quiz-subtitle">
               Question {currentQuestionIndex + 1} of {shuffledQuestions.length}
             </p>
           </div>
-          <div style={{
-            display: 'flex',
-            gap: '20px',
-            alignItems: 'center'
-          }}>
-            <div style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              color: '#667eea'
-            }}>
+          <div className="solo-quiz-stats">
+            <div className="solo-quiz-score">
               Score: {score}
             </div>
-            <div style={{
-              fontSize: '32px',
-              fontWeight: '800',
-              color: timeLeft <= 5 ? '#ef4444' : '#667eea',
-              minWidth: '60px',
-              textAlign: 'center'
-            }}>
+            <div className={`solo-quiz-timer ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
               {timeLeft}s
             </div>
           </div>
         </div>
 
         {/* Question Card */}
-        <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '40px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{
-            fontSize: '24px',
-            color: '#333',
-            marginBottom: '30px',
-            lineHeight: '1.6'
-          }}>
+        <div className="solo-quiz-question-card">
+          <h3 className="solo-quiz-question-text">
             {currentQuestion.text}
           </h3>
 
-          <div style={{
-            display: 'grid',
-            gap: '15px'
-          }}>
+          <div className="solo-quiz-options">
             {currentQuestion.options.map((option, index) => {
               let backgroundColor = 'white';
               let borderColor = '#e5e7eb';
