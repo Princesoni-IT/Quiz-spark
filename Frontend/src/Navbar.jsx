@@ -38,7 +38,7 @@ function Navbar({ user, onProfileClick }) {
     <nav className="navbar">
       <div className="navbar-brand">
         {/* App ka naam, click karne par home page par le jayega */}
-        <a href="/" style={{textDecoration: 'none', color: 'white'}}>Quiz Spark ✨</a>
+        <a href="/" style={{textDecoration: 'none', color: 'white'}}>EduSparkAI✨</a>
       </div>
       <div className="navbar-profile" onClick={onProfileClick}>
         <img 

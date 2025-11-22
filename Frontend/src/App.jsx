@@ -231,7 +231,7 @@ function App() {
   
   const renderAuthPage = () => (
     <div className="auth-container">
-      <h2>Welcome to Quiz Spark!</h2>
+      <h2>Welcome to EduSparkAI!</h2>
       <p>Please {isLoginView ? 'login' : 'create an account'} to continue</p>
       <form onSubmit={isLoginView ? handleLogin : handleSignUp} className="auth-form">
         {!isLoginView && (<input type="text" placeholder="Full Name (for signup)" value={fullName} onChange={(e) => setFullName(e.target.value)} required />)}
