@@ -55,7 +55,7 @@ function Dashboard({ onCreateQuiz, onStartQuiz, onEditQuiz, onBack, onSoloPlay }
   return (
     <div className="dashboard-container">
       <header className="app-header" style={{ textAlign: 'center' }}>
-        <h1>Admin Dashboard</h1>
+        <h1>Dashboard</h1>
         <p>Manage your quizzes or create a new one.</p>
       </header>
 
