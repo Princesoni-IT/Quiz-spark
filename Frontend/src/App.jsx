@@ -279,7 +279,7 @@ function App() {
         <button onClick={() => setCurrentPage('aiQuiz')} className="btn ai-btn">Create with AI</button>
       </div>
     </main>
-      <footer className="app-footer"><h3>Made With 👨‍💻Team ✨Spark (Prince, som, Akhlesh)</h3></footer>
+      <footer className="app-footer"><h3>Designed & Developed by 👨‍💻 (Prince)</h3></footer>
     </>
   );
 

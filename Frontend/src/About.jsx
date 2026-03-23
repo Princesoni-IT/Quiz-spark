@@ -62,8 +62,6 @@ function About({ onBack }) {
           </p>
           <ul style={{ paddingLeft: '20px', listStyle: 'none' }}>
             <li>🚀 Prince - Full Stack Developer</li>
-            <li>🎨 Som - Frontend & UI/UX</li>
-            <li>⚙️ Akhlesh - Backend & Database</li>
           </ul>
         </section>
 
